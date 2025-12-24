@@ -54,6 +54,6 @@ class FavoriteButton(ButtonEntity):
             "rest980_clean",
             service_data={
                 "base_url": self._entry.data["base_url"],
-                "payload": {"cmd": f"favorite_id: {self._data['favorite_id']}"},
+                "payload": {"cmd": {"favorite_id": self._data["favorite_id"]}},
             },
         )
