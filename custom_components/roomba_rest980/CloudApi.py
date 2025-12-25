@@ -511,6 +511,7 @@ class iRobotCloudApi:
                 all_data[blid] = {"error": str(e)}
 
         all_data["schedules"] = await self.get_schedules()
+        all_data["favorites"] = await self.get_favorites()
         return all_data
 
     async def _save_umf_data_for_debug(
