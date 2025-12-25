@@ -357,20 +357,6 @@ class RoombaMapCamera(Camera):
                 "KEEP OUT",
             )
 
-        # Draw clean zones (green)
-        for zone in self._clean_zones:
-            zone_name = zone.get("name", "Clean Zone")
-            current_img = self._draw_zone_polygon(
-                current_img,
-                zone,
-                offset_x,
-                offset_y,
-                scale,
-                CLEAN_ZONE_COLOR[:3],
-                CLEAN_ZONE_BORDER,
-                zone_name,
-            )
-
         # Draw observed zones (orange)
         for zone in self._observed_zones:
             zone_name = zone.get("name", "Observed")
@@ -382,6 +368,20 @@ class RoombaMapCamera(Camera):
                 scale,
                 OBSERVED_ZONE_COLOR[:3],
                 OBSERVED_ZONE_BORDER,
+                zone_name,
+            )
+
+        # Draw clean zones (green)
+        for zone in self._clean_zones:
+            zone_name = zone.get("name", "Clean Zone")
+            current_img = self._draw_zone_polygon(
+                current_img,
+                zone,
+                offset_x,
+                offset_y,
+                scale,
+                CLEAN_ZONE_COLOR[:3],
+                CLEAN_ZONE_BORDER,
                 zone_name,
             )
 
@@ -597,7 +597,7 @@ class RoombaMapCamera(Camera):
         # Draw text background (semi-transparent white)
         draw.rectangle(
             [text_x - 2, text_y - 2, text_x + text_width + 2, text_y + text_height + 2],
-            fill=(255, 255, 255, 200),
+            fill=(255, 255, 255, 100),
         )
 
         # Draw text

@@ -6,7 +6,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 
-from .const import DOMAIN, regionTypeMappings
+from .const import DOMAIN, regionTypeMappings, zoneTypeMappings
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,12 +24,25 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             if "pmaps" in cloud_data:
                 for pmap in cloud_data["pmaps"]:
                     try:
-                        for region in pmap["active_pmapv_details"]["regions"]:
-                            entities.append(
+                        entities.extend(
+                            [
                                 RoomSwitch(
                                     entry, region["name"] or "Unnamed Room", region
                                 )
-                            )
+                                for region in pmap["active_pmapv_details"]["regions"]
+                            ],
+                        )
+                        entities.extend(
+                            [
+                                RoomSwitch(
+                                    entry,
+                                    region["name"] or "Unnamed Zone",
+                                    region,
+                                    True,
+                                )
+                                for region in pmap["active_pmapv_details"]["zones"]
+                            ]
+                        )
                     except (KeyError, TypeError) as e:
                         _LOGGER.warning(
                             "Failed to create pmap entity for %s: %s",
@@ -44,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
 class RoomSwitch(SwitchEntity):
     """A switch entity to determine whether or not a room should be cleaned by the vacuum."""
 
-    def __init__(self, entry, name, data) -> None:
+    def __init__(self, entry, name, data, zone=False) -> None:
         """Creates a switch entity for rooms."""
         self._attr_name = f"Clean {name}"
         self._attr_unique_id = f"{entry.unique_id}_{data['id']}"
@@ -57,10 +70,16 @@ class RoomSwitch(SwitchEntity):
             "name": entry.title,
             "manufacturer": "iRobot",
         }
-        # autodetect icon
-        icon = regionTypeMappings.get(
-            data["region_type"], regionTypeMappings.get("default")
-        )
+        if zone:
+            self._room_json["type"] = "zid"
+            icon = zoneTypeMappings.get(
+                data["zone_type"], zoneTypeMappings.get("default")
+            )
+        else:
+            # autodetect icon
+            icon = regionTypeMappings.get(
+                data["region_type"], regionTypeMappings.get("default")
+            )
         self._attr_icon = icon
 
     @property

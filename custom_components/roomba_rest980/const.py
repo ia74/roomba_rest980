@@ -202,3 +202,9 @@ regionTypeMappings = {
     "unfinished_basement": "mdi:home-floor-b",
     "workshop": "mdi:toolbox",
 }
+
+# I need to find more of these!
+zoneTypeMappings = {
+    "default": "mdi:map-marker",
+    "furniture": "mdi:sofa-single",
+}

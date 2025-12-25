@@ -26,29 +26,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     """Create the sensors needed to poll Roomba's data."""
     coordinator = entry.runtime_data.local_coordinator
     cloudCoordinator = entry.runtime_data.cloud_coordinator
-
-    # Create cloud pmap entities if cloud data is available
-    cloud_entities = []
-    if cloudCoordinator and cloudCoordinator.data:
-        blid = entry.runtime_data.robot_blid
-        # Get cloud data for the specific robot
-        if blid in cloudCoordinator.data:
-            cloud_data = cloudCoordinator.data[blid]
-            # Create pmap entities from cloud data
-            if "pmaps" in cloud_data:
-                for pmap in cloud_data["pmaps"]:
-                    try:
-                        cloud_entities.append(
-                            RoombaCloudPmap(cloudCoordinator, entry, pmap)
-                        )
-                    except (KeyError, TypeError) as e:
-                        _LOGGER.warning(
-                            "Failed to create pmap entity for %s: %s",
-                            pmap.get("pmap_id", "unknown"),
-                            e,
-                        )
-    if cloud_entities:
-        async_add_entities(cloud_entities)
     async_add_entities(
         [
             RoombaAttributes(coordinator, entry),
@@ -77,6 +54,29 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
         ],
         update_before_add=True,
     )
+
+    # Create cloud pmap entities if cloud data is available
+    cloud_entities = []
+    if cloudCoordinator and cloudCoordinator.data:
+        blid = entry.runtime_data.robot_blid
+        # Get cloud data for the specific robot
+        if blid in cloudCoordinator.data:
+            cloud_data = cloudCoordinator.data[blid]
+            # Create pmap entities from cloud data
+            if "pmaps" in cloud_data:
+                for pmap in cloud_data["pmaps"]:
+                    try:
+                        cloud_entities.append(
+                            RoombaCloudPmap(cloudCoordinator, entry, pmap)
+                        )
+                    except (KeyError, TypeError) as e:
+                        _LOGGER.warning(
+                            "Failed to create pmap entity for %s: %s",
+                            pmap.get("pmap_id", "unknown"),
+                            e,
+                        )
+    if cloud_entities:
+        async_add_entities(cloud_entities)
 
 
 class MopCleanMode(RoombaSensor):
@@ -290,6 +290,7 @@ class RoombaCloudPmap(RoombaCloudSensor):
 
         self._rs_given_info = (pmap_name, pmap_id)
         super().__init__(coordinator, entry)
+
         self._attr_extra_state_attributes = pmap
 
 
