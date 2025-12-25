@@ -1,0 +1,26 @@
+services:
+  roomba_one: # This container name can be anything you want, it only must be unique.
+    container_name: rest980
+    image: koalazak/rest980:latest
+    ports:
+      - "3000:3000" # Note down this port if you decide to change it!
+    environment:
+      - BLID=<BLID1> 
+      - PASSWORD=<PW1>
+      - ROBOT_IP=<IP1>
+      - FIRMWARE_VERSION=2
+    restart: unless-stopped
+  roomba_two: # This container name can be anything you want, it only must be unique.
+    container_name: rest980
+    image: koalazak/rest980:latest
+    ports:
+      # rest980 runs internally on port 3000, so the second half must stay 3000.
+      # (docker's format is EXPOSED_PORT:CONTAINER_PORT)
+      # The first half is what your server will expose, thus it must not be the same as the previous bot.
+      - "3001:3000" # Keep the second half at 3000
+    environment:
+      - BLID=<BLID2> 
+      - PASSWORD=<PW2>
+      - ROBOT_IP=<IP2>
+      - FIRMWARE_VERSION=2
+    restart: unless-stopped

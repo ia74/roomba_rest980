@@ -8,13 +8,14 @@ Integrate your iRobot Roomba with Home Assistant using rest980, and the cloud (o
 
 - [x] Native Vacuum entity
 - [x] Cloud API connection
-  - [x] Cloud MQTT connection
+  - [ ] Cloud MQTT connection
     - Testing: I've reverse engineered their MQTT stack somewhat* (but not all available commands) and am still figuring out how it works.
 - [x] Actions
   - [x] Start
     - [x] Favorites
       - This feature requires more testing, to make sure it's actually initiating a favorite cycle.
-    - [ ] Clean all rooms by default
+    - [x] Clean all rooms by default
+      - With no rooms selected, this is the default behavior.
     - [x] Selective room cleaning
     - [ ] Two pass feature
   - [x] Pause
@@ -60,12 +61,13 @@ First, you must gather your robot's on-device password and BLID (identifier).
   For Docker users
   </summary>
 Execute this command:  
-  
+
 ```sh
 docker run -it node sh -c "npm install -g dorita980 && get-roomba-password <robotIP>"
 ```
 
 and follow the on-screen instructions.
+
 </details>
 
 <details>
@@ -106,6 +108,14 @@ docker-compose up -d rest980
 ```
 
 You may also add the service to an existing configuration. You do not need to add file binds/mounts, as there are not any.
+
+### More than 1 Roomba
+
+If you have more than one Roomba, check out [the two-robot docker compose file.](docker-compose-two-robots.yaml).
+
+You need to run 1 instance of rest980 *per robot*.  
+The setup remains the same once in Home Assistant, except the ports must change.  
+Note down your rest980 servers ports and which robots they correspond to!
 
 </details>
 
@@ -208,7 +218,7 @@ Rooms are not given to us easily when we're fully local, but a fix is in progres
 
 ## Important Note
 
-From this part on, the guide will not diverge into Cloud/Local unless required and will assume you are using Cloud features, but most of it should be generically implemented.
+From this part on, the guide will not diverge into Cloud/Local unless required and will assume you are using Cloud features, but most of it will match up.
 
 ## Step 5: Robot Maintenance / Done!
 
