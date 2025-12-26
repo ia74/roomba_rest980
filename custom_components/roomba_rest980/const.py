@@ -8,6 +8,7 @@ DEFAULT_SCAN_INTERVAL = timedelta(seconds=10)  # or whatever interval you want
 notReadyMappings = {
     0: "n-a",
     2: "Uneven Ground",
+    16: "Bumped Unexpectedly",
     15: "Low Battery",
     31: "Fill Tank",
     39: "Pending",
