@@ -8,15 +8,14 @@ Integrate your iRobot Roomba with Home Assistant using rest980, and the cloud (o
 
 - [x] Native Vacuum entity
 - [x] Cloud API connection
+  - [x] Cloud HTTP methods
   - [ ] Cloud MQTT connection
     - Testing: I've reverse engineered their MQTT stack somewhat* (but not all available commands) and am still figuring out how it works.
 - [x] Actions
   - [x] Start
-    - [x] Favorites
-      - This feature requires more testing, to make sure it's actually initiating a favorite cycle.
-    - [x] Clean all rooms by default
-      - With no rooms selected, this is the default behavior.
     - [x] Selective room cleaning
+    - [x] Favorites
+    - [x] Clean all rooms by default
     - [ ] Two pass feature
   - [x] Pause
   - [ ] Unpause
@@ -25,7 +24,8 @@ Integrate your iRobot Roomba with Home Assistant using rest980, and the cloud (o
   - [x] Stop
   - [x] Spot Clean
   - [ ] Mapping Run
-- [x] Dynamically grab rooms and add them to the UI (Cloud only)
+- [ ] Locally grab rooms and add them to the UI
+- [x] (Cloud only) Dynamically grab rooms and add them to the UI
   - [x] Selective room cleaning
   - [x] Grab room data
   - [x] Create map image
