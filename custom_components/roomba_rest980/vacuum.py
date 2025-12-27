@@ -122,9 +122,9 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             # Find all room switches that are turned on
             for key, entity in domain_data.items():
                 if (
-                    key.startswith("switch.")
-                    and hasattr(entity, "is_on")
-                    and entity.is_on
+                    key.startswith("select.")
+                    and hasattr(entity, "current_option")
+                    and entity.current_option != "Don't Clean"
                 ):
                     selected_rooms.append(entity)
 

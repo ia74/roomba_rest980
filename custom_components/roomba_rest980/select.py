@@ -2,7 +2,7 @@
 
 import logging
 
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.select import SelectEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 
@@ -26,18 +26,20 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     try:
                         entities.extend(
                             [
-                                RoomSwitch(
-                                    entry, region["name"] or "Unnamed Room", region
+                                CleanRoomPasses(
+                                    entry,
+                                    region["name"] or "Unnamed Room",
+                                    region,
+                                    pmap,
                                 )
                                 for region in pmap["active_pmapv_details"]["regions"]
-                            ],
-                        )
-                        entities.extend(
-                            [
-                                RoomSwitch(
+                            ]
+                            + [
+                                CleanRoomPasses(
                                     entry,
                                     region["name"] or "Unnamed Zone",
                                     region,
+                                    pmap,
                                     True,
                                 )
                                 for region in pmap["active_pmapv_details"]["zones"]
@@ -50,28 +52,40 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                             e,
                         )
     for ent in entities:
-        entry.runtime_data.switched_rooms[f"switch.{ent.unique_id}"] = ent
+        entry.runtime_data.switched_rooms[f"select.{ent.unique_id}"] = ent
     async_add_entities(entities)
 
 
-class RoomSwitch(SwitchEntity):
-    """A switch entity to determine whether or not a room should be cleaned by the vacuum."""
+class CleanRoomPasses(SelectEntity):
+    """A number entity to determine how many passes a room should be cleaned with."""
 
-    def __init__(self, entry, name, data, zone=False) -> None:
+    def __init__(self, entry, name, data, pmap, zone=False) -> None:
         """Creates a switch entity for rooms."""
-        self._attr_name = f"Clean {name}"
-        self._attr_unique_id = f"{entry.unique_id}_{data['id']}"
-        self._is_on = False
-        self._room_json = {"region_id": data["id"], "type": "rid"}
+        self._attr_name = (
+            f"Clean {pmap['active_pmapv_details']['map_header']['name']}: {name}"
+        )
+        self._entry = entry
+        self._attr_unique_id = f"{entry.unique_id}_p_{data['id']}_{'z' if zone else 'r'}_{pmap['active_pmapv_details']['active_pmapv']['pmap_id']}"
+        self._attached = f"{entry.unique_id}_{data['id']}_{'z' if zone else 'r'}_{pmap['active_pmapv_details']['active_pmapv']['pmap_id']}"
+        self._attr_current_option = "Don't Clean"
+        self._attr_options = ["Don't Clean", "One Pass", "Two Passes"]
         self._attr_entity_category = EntityCategory.CONFIG
-        self._attr_extra_state_attributes = data
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.unique_id)},
             "name": entry.title,
             "manufacturer": "iRobot",
         }
+        self.room_json = {
+            "region_id": data["id"],
+            "type": "rid",
+            "params": {"noAutoPasses": False, "twoPass": False},
+        }
+        self._attr_extra_state_attributes = {
+            "room_data": data,
+            "room_json": self.room_json,
+        }
         if zone:
-            self._room_json["type"] = "zid"
+            self.room_json["type"] = "zid"
             icon = zoneTypeMappings.get(
                 data["zone_type"], zoneTypeMappings.get("default")
             )
@@ -82,21 +96,16 @@ class RoomSwitch(SwitchEntity):
             )
         self._attr_icon = icon
 
-    @property
-    def is_on(self):
-        """Does the user want the room to be cleaned?"""
-        return self._is_on
-
-    async def async_turn_on(self, **kwargs):
-        """Yes."""
-        self._is_on = True
-        self.async_write_ha_state()
-
-    async def async_turn_off(self, **kwargs):
-        """No."""
-        self._is_on = False
-        self.async_write_ha_state()
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option."""
+        if option == "Two Passes":
+            self.room_json["params"] = {"noAutoPasses": True, "twoPass": True}
+        elif option == "One Pass":
+            self.room_json["params"] = {"noAutoPasses": False, "twoPass": False}
+        self._attr_extra_state_attributes["room_json"] = self.room_json
+        self._attr_current_option = option
+        self._async_write_ha_state()
 
     def get_region_json(self):
         """Return robot-readable JSON to identify the room to start cleaning it."""
-        return self._room_json
+        return self.room_json

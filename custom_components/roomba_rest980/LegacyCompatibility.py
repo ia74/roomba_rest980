@@ -85,7 +85,7 @@ def createExtendedAttributes(self) -> dict[str, any]:
     else:
         jobExpireTime = "n-a"
     # Bin
-    robotBin = data.get("bin")
+    robotBin = data.get("bin", {"full": False, "present": False})
     binFull = robotBin.get("full")
     binPresent = robotBin.get("present")
     # Dock

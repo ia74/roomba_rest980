@@ -60,7 +60,7 @@ class RoombaSensor(CoordinatorEntity, SensorEntity):
         mapping.get(index, index)
 
     def _get_default(self, key: str, default: str):
-        return self.coordinator.data.get(key) if self.coordinator.data else default
+        return self.coordinator.data.get(key, default)
 
 
 class RoombaCloudSensor(CoordinatorEntity, SensorEntity):

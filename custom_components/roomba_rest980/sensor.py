@@ -61,6 +61,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             MopBehavior(coordinator, entry),
             MopPad(coordinator, entry),
             MopTank(coordinator, entry),
+            MopTankLevel(coordinator, entry),
         ],
         update_before_add=True,
     )
@@ -113,11 +114,11 @@ class MopCleanMode(RoombaSensor):
         if isinstance(padWetness, dict):
             # priority: disposable > reusable
             if "disposable" in padWetness:
-                mode = padWetness["disposable"]
+                mode = "Disposable" if padWetness["disposable"] else "Indisposable"
             elif "reusable" in padWetness:
-                mode = padWetness["reusable"]
+                mode = "Reusable" if padWetness["reusable"] else "Nonreusable"
             else:
-                mode = 0
+                mode = "Unknown"
         else:
             mode = padWetness
         self._attr_native_value = mode
@@ -140,7 +141,7 @@ class MopBehavior(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        rankOverlap = data.get("rankOverlap")
+        rankOverlap = data.get("rankOverlap", False)
         if not rankOverlap:
             if data.get("padDryAllowed"):
                 dirty_pause = data.get("padDirtyPause", 0) == 1
@@ -181,11 +182,7 @@ class MopPad(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        detectedPad = data.get("detectedPad")
-        if not detectedPad:
-            self._attr_available = False
-            self.async_write_ha_state()
-            return
+        detectedPad = data.get("detectedPad", "invalid")
         self._attr_native_value = padMappings.get(detectedPad, detectedPad)
         self.async_write_ha_state()
 
@@ -208,13 +205,13 @@ class MopTank(RoombaSensor):
         data = self.coordinator.data or {}
         status = data.get("cleanMissionStatus", {})
         notReady = status.get("notReady")
-        detectedPad = data.get("detectedPad")
+        detectedPad = data.get("detectedPad", False)
         if not detectedPad:
             self._attr_available = False
             self.async_write_ha_state()
             return
-        tankPresent = data.get("tankPresent")
-        lidOpen = data.get("lidOpen")
+        tankPresent = data.get("tankPresent", False)
+        lidOpen = data.get("lidOpen", False)
         if tankPresent:
             if notReady == 31:  # Fill Tank
                 tankState = "Fill Tank"

@@ -141,7 +141,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Safely remove Roombas."""
     await hass.config_entries.async_unload_platforms(
-        entry, ["vacuum", "sensor", "switch", "button", "camera"]
+        entry, ["vacuum", "select", "sensor", "button", "camera"]
     )
     return True
 
@@ -173,7 +173,7 @@ async def _async_setup_cloud(
             entry.runtime_data.robot_blid = entry.data["robot_blid"]
 
         await hass.config_entries.async_forward_entry_setups(
-            entry, ["switch", "button", "camera"]
+            entry, ["select", "button", "camera"]
         )
 
     except Exception as e:  # pylint: disable=broad-except

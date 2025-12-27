@@ -16,7 +16,7 @@ Integrate your iRobot Roomba with Home Assistant using rest980, and the cloud (o
     - [x] Selective room cleaning
     - [x] Favorites
     - [x] Clean all rooms by default
-    - [ ] Two pass feature
+    - [x] Two pass feature
   - [x] Pause
   - [ ] Unpause
     - Testing: It may restart a run instead of unpausing.
@@ -199,15 +199,25 @@ iRobot does some unknown things with their cloud API. As of current, my implemen
 
 ## Step 4: Rooms! (Cloud)
 
-Your rooms will be auto-imported, alongside a clean map view, much like the one from the app.  
+Your rooms and favorites will be auto-imported, alongside a clean map view, similar to the one from the app.  
+
+![Map view](img/map_view.png)
+
 This allows you to selectively clean rooms, and control it by automation (tutorial later).  
-Rooms you select will be cleaned in the order you select. Two-pass functionailty coming soon as well.
+Rooms you select will be cleaned in the order you select, with how many passes you define.
 
 ![Added the config!](img/rooms.png)
 
-Room types and names are also dynamically imported as to be expected.
+To clean a room, simply click its option and make it either:
 
-To work with this, switch the "Clean (room)" switches on in the order you like, then press the Clean button from the vacuum's entity!
+- Don't Clean
+- One Pass
+- Two Passes
+
+Then press the Clean button from the vacuum's entity!
+
+![Two pass](img/two_pass.png)
+
 
 ![Room selection](img/clean.png)
 
