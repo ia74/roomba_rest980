@@ -11,6 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
 from .coordinator import RoombaCloudCoordinator, RoombaDataCoordinator
+from .select import CleanRoomPasses
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -25,7 +26,7 @@ class RoombaRuntimeData:
     cloud_enabled: bool = False
     cloud_coordinator: RoombaCloudCoordinator = None
 
-    switched_rooms: dict[str, RoomSwitch] = {}
+    switched_rooms: dict[str, CleanRoomPasses] = {}
 
     def __init__(
         self,
