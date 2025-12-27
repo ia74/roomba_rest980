@@ -3,7 +3,13 @@
 import logging
 
 from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.const import PERCENTAGE, UnitOfArea, UnitOfTime
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfArea,
+    UnitOfTime,
+    SIGNAL_STRENGTH_DECIBELS,
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.util import dt as dt_util
@@ -46,6 +52,10 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             RoombaCleanMode(coordinator, entry),
             RoombaNotReady(coordinator, entry),
             RoombaError(coordinator, entry),
+            RoombaIP(coordinator, entry),
+            RoombaRSSI(coordinator, entry),
+            RoombaNetworkNoise(coordinator, entry),
+            RoombaSNR(coordinator, entry),
             RoombaCloudAttributes(cloudCoordinator, entry),
             MopCleanMode(coordinator, entry),
             MopBehavior(coordinator, entry),
@@ -100,7 +110,16 @@ class MopCleanMode(RoombaSensor):
             self._attr_available = False
             self.async_write_ha_state()
             return
-        mode = padWetness.get("disposable")
+        if isinstance(padWetness, dict):
+            # priority: disposable > reusable
+            if "disposable" in padWetness:
+                mode = padWetness["disposable"]
+            elif "reusable" in padWetness:
+                mode = padWetness["reusable"]
+            else:
+                mode = 0
+        else:
+            mode = padWetness
         self._attr_native_value = mode
         self.async_write_ha_state()
 
@@ -123,6 +142,22 @@ class MopBehavior(RoombaSensor):
         data = self.coordinator.data or {}
         rankOverlap = data.get("rankOverlap")
         if not rankOverlap:
+            if data.get("padDryAllowed"):
+                dirty_pause = data.get("padDirtyPause", 0) == 1
+                dry_allowed = data.get("padDryAllowed", 0) == 1
+                wash_allowed = data.get("padWashAllowed", 0) == 1
+                modes = []
+                if dirty_pause:
+                    modes.append("Dirty Pause")
+                if dry_allowed:
+                    modes.append("Dry")
+                if wash_allowed:
+                    modes.append("Wash")
+
+                value = " + ".join(modes)
+                self._attr_native_value = value
+                self.async_write_ha_state()
+                return
             self._attr_available = False
             self.async_write_ha_state()
             return
@@ -190,6 +225,26 @@ class MopTank(RoombaSensor):
         else:
             tankState = "Tank Missing"
         self._attr_native_value = tankState
+        self.async_write_ha_state()
+
+
+class MopTankLevel(RoombaSensor):
+    """A simple sensor that returns the level of the tank of the mop."""
+
+    _rs_given_info = ("Mop Tank Level", "mop_tank_level")
+
+    def __init__(self, coordinator, entry) -> None:
+        """Initialize."""
+        super().__init__(coordinator, entry)
+        self._attr_native_unit_of_measurement = PERCENTAGE
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._attr_icon = "mdi:cup-water"
+
+    def _handle_coordinator_update(self):
+        """Update sensor when coordinator data changes."""
+        data = self.coordinator.data or {}
+        tankLvl = data.get("tankLvl")
+        self._attr_native_value = tankLvl
         self.async_write_ha_state()
 
 
@@ -360,6 +415,88 @@ class RoombaCleanBase(RoombaSensor):
         self.async_write_ha_state()
 
 
+class RoombaIP(RoombaSensor):
+    """A simple sensor that returns the state of the two pass mode of the Roomba."""
+
+    _rs_given_info = ("IP", "ip")
+
+    def __init__(self, coordinator, entry) -> None:
+        """Initialize."""
+        super().__init__(coordinator, entry)
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._attr_icon = "mdi:ip"
+
+    def _handle_coordinator_update(self):
+        """Update sensor when coordinator data changes."""
+        data = self.coordinator.data or {}
+        net_info = data.get("netinfo")
+        self._attr_native_value = net_info.get("addr", "n-a")
+        self.async_write_ha_state()
+
+
+class RoombaRSSI(RoombaSensor):
+    """A simple sensor that returns the state of the RSSI of the Roomba."""
+
+    _rs_given_info = ("RSSI", "rssi")
+
+    def __init__(self, coordinator, entry) -> None:
+        """Initialize."""
+        super().__init__(coordinator, entry)
+        self._attr_device_class = SensorDeviceClass.SIGNAL_STRENGTH
+        self._attr_native_unit_of_measurement = SIGNAL_STRENGTH_DECIBELS_MILLIWATT
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._attr_icon = "mdi:signal"
+
+    def _handle_coordinator_update(self):
+        """Update sensor when coordinator data changes."""
+        data = self.coordinator.data or {}
+        signal_info = data.get("signal")
+        self._attr_native_value = signal_info.get("rssi", "n-a")
+        self.async_write_ha_state()
+
+
+class RoombaSNR(RoombaSensor):
+    """A simple sensor that returns the state of the signal to noise ratio of the Roomba."""
+
+    _rs_given_info = ("SNR", "snr")
+
+    def __init__(self, coordinator, entry) -> None:
+        """Initialize."""
+        super().__init__(coordinator, entry)
+        self._attr_device_class = SensorDeviceClass.SIGNAL_STRENGTH
+        self._attr_native_unit_of_measurement = SIGNAL_STRENGTH_DECIBELS
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._attr_icon = "mdi:signal"
+
+    def _handle_coordinator_update(self):
+        """Update sensor when coordinator data changes."""
+        data = self.coordinator.data or {}
+        signal_info = data.get("signal")
+        self._attr_native_value = signal_info.get("snr", "n-a")
+        self.async_write_ha_state()
+
+
+class RoombaNetworkNoise(RoombaSensor):
+    """A simple sensor that returns the state of the network noise of the Roomba."""
+
+    _rs_given_info = ("Signal Noise", "signal_noise")
+
+    def __init__(self, coordinator, entry) -> None:
+        """Initialize."""
+        super().__init__(coordinator, entry)
+        self._attr_device_class = SensorDeviceClass.SIGNAL_STRENGTH
+        self._attr_native_unit_of_measurement = SIGNAL_STRENGTH_DECIBELS
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._attr_icon = "mdi:signal"
+
+    def _handle_coordinator_update(self):
+        """Update sensor when coordinator data changes."""
+        data = self.coordinator.data or {}
+        signal_info = data.get("signal")
+        self._attr_native_value = signal_info.get("noise", "n-a")
+        self.async_write_ha_state()
+
+
 class RoombaBinSensor(RoombaSensor):
     """Read the bin data of the Roomba."""
 
@@ -371,6 +508,11 @@ class RoombaBinSensor(RoombaSensor):
         self._attr_device_class = SensorDeviceClass.ENUM
         self._attr_options = ["Not Full", "Full"]
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    @property
+    def extra_state_attributes(self):
+        """Return all the attributes about the bin."""
+        return self._get_default("bin", {})
 
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""

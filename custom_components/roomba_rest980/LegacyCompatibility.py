@@ -163,13 +163,25 @@ def createExtendedAttributes(self) -> dict[str, any]:
     if data.get("padWetness"):
         # It's a mop
         # TODO: Make sure this works! I don't own a mop, so I'm just re-using what jeremywillans has written.
-        robotCleanMode = data.get("padWetness")["disposable"]
+        pad = data.get("padWetness", {})
+        if isinstance(pad, dict):
+            # priority: disposable > reusable
+            if "disposable" in pad:
+                robotCleanMode = pad["disposable"]
+            elif "reusable" in pad:
+                robotCleanMode = pad["reusable"]
+            else:
+                robotCleanMode = 0
+        else:
+            robotCleanMode = pad
         mopRankOverlap = data.get("rankOverlap")
+        if not mopRankOverlap:
+            robotObject["mop_behavior"] = "n-a"
+        else:
+            robotObject["mop_behavior"] = mopRanks.get(mopRankOverlap, mopRankOverlap)
         detectedPad = data.get("detectedPad")
         tankPresent = data.get("tankPresent")
         lidOpen = data.get("lidOpen")
-        if mopRankOverlap:
-            robotObject["mop_behavior"] = mopRanks.get(mopRankOverlap, mopRankOverlap)
         if detectedPad:
             robotObject["pad"] = padMappings.get(detectedPad)
         if tankPresent:
