@@ -11,7 +11,6 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
 from .coordinator import RoombaCloudCoordinator, RoombaDataCoordinator
-from .switch import RoomSwitch
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
