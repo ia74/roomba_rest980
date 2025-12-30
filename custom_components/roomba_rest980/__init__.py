@@ -193,10 +193,15 @@ async def _async_match_blid(
         for blid, robo in cloud_coordinator.data.items():
             try:
                 # Get cloud robot info
+                _LOGGER.info("From robot %s", robo)
+                _LOGGER.info("Accessing robot_info")
                 robot_info = robo.get("robot_info") or {}
-                cloud_sku = robot_info.get("sku")
-                cloud_sw_ver = robot_info.get("softwareVer")
-                cloud_name = robot_info.get("name")
+                _LOGGER.info("Accessing robot_info.sku")
+                cloud_sku = robot_info.get("sku", "None")
+                _LOGGER.info("Accessing robot_info.softwareVer")
+                cloud_sw_ver = robot_info.get("softwareVer", "None")
+                _LOGGER.info("Accessing robot_info.name")
+                cloud_name = robot_info.get("name", "None")
 
                 # Get local robot info
                 local_data = coordinator.data or {}
