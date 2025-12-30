@@ -189,6 +189,7 @@ async def _async_match_blid(
 ) -> None:
     """Match local Roomba with cloud robot by comparing device info."""
     try:
+        _LOGGER.info("Attributes received: %s", cloud_coordinator.data.items())
         for blid, robo in cloud_coordinator.data.items():
             try:
                 # Get cloud robot info
