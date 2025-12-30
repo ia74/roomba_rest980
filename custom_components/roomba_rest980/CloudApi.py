@@ -355,7 +355,7 @@ class iRobotCloudApi:
             self.credentials = login_result["credentials"]
             self.robots = login_result["robots"]
 
-            _LOGGER.debug("iRobot login successful, found %d robots", len(self.robots))
+            _LOGGER.info("iRobot login successful, found %d robots", len(self.robots))
             return login_result
 
     async def authenticate(self) -> dict[str, Any]:
@@ -475,6 +475,7 @@ class iRobotCloudApi:
             "mission_history": await self.get_mission_history(blid),
             "pmaps": await self.get_pmaps(blid),
         }
+        _LOGGER.info("Data for robot %s: %s", blid, robot_data["robot_info"])
 
         # Get UMF data for active pmaps
         for pmap in robot_data["pmaps"]:
@@ -505,7 +506,7 @@ class iRobotCloudApi:
         for blid in self.robots:
             try:
                 all_data[blid] = await self.get_robot_data(blid)
-                _LOGGER.debug("Retrieved data for robot %s", blid)
+                _LOGGER.info("Retrieved data for robot %s", blid)
             except CloudApiError as e:
                 _LOGGER.error("Failed to get data for robot %s: %s", blid, e)
                 all_data[blid] = {"error": str(e)}
