@@ -191,16 +191,13 @@ async def _async_match_blid(
     try:
         _LOGGER.error("Attributes received: %s", cloud_coordinator.data.items())
         for blid, robo in cloud_coordinator.data.items():
+            if not isinstance(robo, dict):
+                continue
             try:
                 # Get cloud robot info
-                _LOGGER.error("From robot %s", robo)
-                _LOGGER.error("Accessing robot_info")
                 robot_info = robo.get("robot_info") or {}
-                _LOGGER.error("Accessing robot_info.sku")
                 cloud_sku = robot_info.get("sku", "None")
-                _LOGGER.error("Accessing robot_info.softwareVer")
                 cloud_sw_ver = robot_info.get("softwareVer", "None")
-                _LOGGER.error("Accessing robot_info.name")
                 cloud_name = robot_info.get("name", "None")
 
                 # Get local robot info
