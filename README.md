@@ -12,7 +12,7 @@ As I don't own a Braava Jet mop, the support for it is purely maintained [by the
 - [x] Cloud API connection
   - [x] Cloud HTTP methods
   - [ ] Cloud MQTT connection
-    - I've reverse engineered their MQTT stack and am working on the best method to re-implement it. I may incorporate it into rest980 directly.
+    - I've reverse engineered their MQTT stack and am working on incorporating it into [dorita/rest980.](https://github.com/ia74/dorita980/blob/master/lib/v2/cloud.js)
 - [x] Selective room cleaning
   - [x] Two pass feature
   - [x] (Cloud only) Dynamically grab rooms and add them to the UI
