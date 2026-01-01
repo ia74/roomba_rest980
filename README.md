@@ -1,8 +1,10 @@
 # roomba_rest980
 
-Integrate your iRobot Roomba with Home Assistant using rest980, and the cloud (optional).  
+Integrate your iRobot Roomba and Braava Jets with Home Assistant using rest980, and the cloud (optional).
 
-> Braava jet/mops are now available *with partial support!* If anyone has one of these mops and is willing to test, please do so and make an issue if anything goes wrong, or anything is missing! 
+## Note about Braava
+
+As I don't own a Braava Jet mop, the support for it is purely maintained [by the community and their help!](https://github.com/ia74/roomba_rest980/issues/12) Thus, I can't bug-test the integration with as much time as I can the vacuum part. If you run into any issues, [make an issue and I'll work on fixing them!](https://github.com/ia74/roomba_rest980/issues/new)
 
 ## Features
 
@@ -10,25 +12,29 @@ Integrate your iRobot Roomba with Home Assistant using rest980, and the cloud (o
 - [x] Cloud API connection
   - [x] Cloud HTTP methods
   - [ ] Cloud MQTT connection
-    - Testing: I've reverse engineered their MQTT stack somewhat* (but not all available commands) and am still figuring out how it works.
-- [x] Actions
-  - [x] Start
-    - [x] Selective room cleaning
-    - [x] Favorites
-    - [x] Clean all rooms by default
-    - [x] Two pass feature
-  - [x] Pause
-  - [ ] Unpause
-    - Testing: It may restart a run instead of unpausing.
-  - [x] Return Home
-  - [x] Stop
-  - [x] Spot Clean
-  - [ ] Mapping Run
-- [ ] Locally grab rooms and add them to the UI
-- [x] (Cloud only) Dynamically grab rooms and add them to the UI
-  - [x] Selective room cleaning
+    - I've reverse engineered their MQTT stack and am working on the best method to re-implement it. I may incorporate it into rest980 directly.
+- [x] Selective room cleaning
+  - [x] Two pass feature
+  - [x] (Cloud only) Dynamically grab rooms and add them to the UI
   - [x] Grab room data
   - [x] Create map image
+- [x] Favorites
+- [x] Start
+  - [x] Clean all rooms by default
+- [x] Pause
+- [ ] Unpause
+- [x] Stop
+- [x] Return Home
+- [ ] Spot Clean
+- [ ] Mapping Run
+- [ ] Maintenance parts
+- [ ] Schedules
+- [ ] Real-time map view
+  - [Requires jailbreaking robot (public release WIP)](https://community.home-assistant.io/t/roomba-i7-rest980-with-selective-room-cleaning-integrate-your-irobot-roomba-with-home-assistant/921713/15?u=ia74)
+  - [ ] Real-time room position entity
+  - [ ] Real-time robot position entity
+- [ ] Locally grab rooms and add them to the UI
+- [ ] [(Maybe) Timeline Report from newer iRobot app](https://github.com/ia74/roomba_rest980/issues/4#issuecomment-3694259760)
 - [x] Entity attribute parity with jeremywillans' YAML config entry
 
 ## Why?
@@ -46,7 +52,7 @@ I found that working with [jeremywillans/ha-rest980-roomba](https://github.com/j
   - Note that everytime you remap and a room changes, it's ID may change (local users)!
 - Knowledge of your Roomba and rest980 servers' IPs
 
-> I recommend that you use https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card as this is almost done being integrated with it.  
+> I recommend that you use [https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card](https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card) as this is almost done being integrated with it.  
 > The only feature that requires testing is the selection of rooms (is separate from using the switch-based built in).
 
 ## Step 1: Setting up rest980: Grab Robot Credentials
