@@ -134,7 +134,15 @@ class MopBehavior(RoombaSensor):
         """Initialize."""
         super().__init__(coordinator, entry)
         self._attr_device_class = SensorDeviceClass.ENUM
-        self._attr_options = list(mopRanks.values())
+        self._attr_options = [
+            *list(mopRanks.values()),
+            "Dirty Pause",
+            "Dirty Pause + Dry",
+            "Dirty Pause + Dry + Wash",
+            "Dry",
+            "Dry + Wash",
+            "Wash",
+        ]
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:shimmer"
 
