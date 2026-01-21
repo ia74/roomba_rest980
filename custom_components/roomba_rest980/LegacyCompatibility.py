@@ -43,11 +43,11 @@ def createExtendedAttributes(self) -> dict[str, any]:
     else:
         robotCarpetBoost = "n-a"
     battery = data.get("batPct")
-    if "+" in softwareVer:
+    if softwareVer and "+" in softwareVer:
         softwareVer = softwareVer.split("+")[1]
     if cycle == "none" and notReady == 39:
         extv = "Pending"
-    elif notReady > 0:
+    elif notReady and notReady > 0:
         extv = f"Not Ready ({notReady})"
     else:
         extv = cycleMappings.get(cycle, cycle)
@@ -57,7 +57,7 @@ def createExtendedAttributes(self) -> dict[str, any]:
         rPhase = "Stopped"
     else:
         rPhase = phaseMappings.get(phase, phase)
-    if missionStartTime != 0:
+    if missionStartTime and missionStartTime != 0:
         time = datetime.fromtimestamp(missionStartTime)
         elapsed = round((datetime.now().timestamp() - time.timestamp()) / 60)
         if elapsed > 60:
@@ -66,19 +66,19 @@ def createExtendedAttributes(self) -> dict[str, any]:
             jobTime = f"{elapsed}m"
     else:
         jobTime = "n-a"
-    if rechargeTime != 0:
+    if rechargeTime and rechargeTime != 0:
         time = datetime.fromtimestamp(rechargeTime)
         resume = round((datetime.now().timestamp() - time.timestamp()) / 60)
-        if elapsed > 60:
+        if 'elapsed' in locals() and elapsed > 60:
             jobResumeTime = f"{resume // 60}h {f'{resume % 60:0>2d}'}m"
         else:
             jobResumeTime = f"{resume}m"
     else:
         jobResumeTime = "n-a"
-    if expireTime != 0:
+    if expireTime and expireTime != 0:
         time = datetime.fromtimestamp(expireTime)
         expire = round((datetime.now().timestamp() - time.timestamp()) / 60)
-        if elapsed > 60:
+        if 'elapsed' in locals() and elapsed > 60:
             jobExpireTime = f"{expire // 60}h {f'{expire % 60:0>2d}'}m"
         else:
             jobExpireTime = f"{expire}m"
@@ -89,7 +89,7 @@ def createExtendedAttributes(self) -> dict[str, any]:
     binFull = robotBin.get("full")
     binPresent = robotBin.get("present")
     # Dock
-    dock = data.get("dock")
+    dock = data.get("dock") or {}
     dockState = dock.get("state")
     # Pose
     ## NOTE: My roomba's firmware does not support this anymore, so I'm blindly guessing based on the previous YAML integration details.
@@ -103,23 +103,23 @@ def createExtendedAttributes(self) -> dict[str, any]:
     else:
         location = "n-a"
     # Networking
-    signal = data.get("signal")
+    signal = data.get("signal") or {}
     rssi = signal.get("rssi")
     # Runtime Statistics
     runtimeStats = data.get("runtimeStats")
-    sqft = runtimeStats.get("sqft")
-    hr = runtimeStats.get("hr")
-    timeMin = runtimeStats.get("min")
+    sqft = runtimeStats.get("sqft") if runtimeStats is not None else None
+    hr = runtimeStats.get("hr") if runtimeStats is not None else None
+    timeMin = runtimeStats.get("min") if runtimeStats is not None else None
     # Mission total(s?)
-    bbmssn = data.get("bbmssn")
+    bbmssn = data.get("bbmssn") or {}
     numMissions = bbmssn.get("nMssn")
     # Run total(s?)
-    bbrun = data.get("bbrun")
+    bbrun = data.get("bbrun") or {}
     numDirt = bbrun.get("nScrubs")
     numEvacs = bbrun.get("nEvacs")
     # numEvacs only for I7+/S9+ Models (Clean Base)
     pmaps = data.get("pmaps", [])
-    pmap0id = next(iter(pmaps[0]), None) if pmaps else None
+    pmap0id = next(iter(pmaps[0]), None) if pmaps and pmaps[0] else None
     noAutoPasses = data.get("noAutoPasses")
     twoPass = data.get("twoPass")
     if noAutoPasses is not None and twoPass is not None:
@@ -131,6 +131,18 @@ def createExtendedAttributes(self) -> dict[str, any]:
             robotCleanMode = "Auto"
     else:
         robotCleanMode = "n-a"
+
+    # Bezpieczne przeliczanie powierzchni
+    if isinstance(sqft, (int, float)):
+        total_area = f"{round(sqft / 10.764 * 100)}m²"
+    else:
+        total_area = None
+
+    # Bezpieczne łączenie czasu
+    if hr is not None and timeMin is not None:
+        total_time = f"{hr}h {timeMin}m"
+    else:
+        total_time = "n-a"
 
     robotObject = {
         "extendedStatus": extv,
@@ -144,8 +156,8 @@ def createExtendedAttributes(self) -> dict[str, any]:
         "clean_base": cleanBaseMappings.get(dockState, dockState),
         "location": location,
         "rssi": rssi,
-        "total_area": f"{round(sqft / 10.764 * 100)}m²",
-        "total_time": f"{hr}h {timeMin}m",
+        "total_area": total_area,
+        "total_time": total_time,
         "total_jobs": numMissions,
         "dirt_events": numDirt,
         "evac_events": numEvacs,
