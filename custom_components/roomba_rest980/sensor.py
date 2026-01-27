@@ -204,7 +204,7 @@ class MopTank(RoombaSensor):
         """Initialize."""
         super().__init__(coordinator, entry)
         self._attr_device_class = SensorDeviceClass.ENUM
-        self._attr_options = list(padMappings.values())
+        self._attr_options = ["Fill Tank", "Ready", "Lid Open", "Tank Missing"]
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:shimmer"
 
