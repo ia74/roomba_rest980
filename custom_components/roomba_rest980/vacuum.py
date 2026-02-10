@@ -204,3 +204,45 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             },
             blocking=True,
         )
+
+    async def async_send_command(
+        self,
+        command: str,
+        params: dict[str, Any] | list[Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Send a command to a vacuum cleaner."""
+
+        if command == "start":
+            regions = [
+                {
+                    "type": "rid",
+                    "region_id": region.get("region_id"),
+                    "params": {
+                        "noAutoPasses": False,
+                        "twoPass": region.get("params", {}).get("twoPass"),
+                     },
+                }
+                for region in params.get("regions", [])
+            ]
+
+            if regions:
+                payload = {
+                    "ordered": 1,
+                    "pmap_id": self._attr_extra_state_attributes.get("pmap0_id", ""),
+                    "regions": regions,
+                }
+            else:
+                payload = {"action": "start"}
+
+            await self.hass.services.async_call(
+                DOMAIN,
+                "rest980_clean",
+                service_data={
+                    "payload": payload,
+                    "base_url": self._entry.data["base_url"],
+                },
+                blocking=True,
+            )
+        else:
+            raise NotImplementedError(f"Command not implemented: {command}")
