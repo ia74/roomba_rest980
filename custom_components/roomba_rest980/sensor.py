@@ -414,7 +414,7 @@ class RoombaCleanBase(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        dock = data.get("dock")
+        dock = data.get("dock") or {}
         dockState = dock.get("state")
         self._attr_native_value = cleanBaseMappings.get(dockState, "Unknown")
         self.async_write_ha_state()
@@ -434,7 +434,7 @@ class RoombaIP(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        net_info = data.get("netinfo")
+        net_info = data.get("netinfo") or {}
         self._attr_native_value = net_info.get("addr", "n-a")
         self.async_write_ha_state()
 
@@ -455,7 +455,7 @@ class RoombaRSSI(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        signal_info = data.get("signal")
+        signal_info = data.get("signal") or {}
         self._attr_native_value = signal_info.get("rssi", "n-a")
         self.async_write_ha_state()
 
@@ -476,7 +476,7 @@ class RoombaSNR(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        signal_info = data.get("signal")
+        signal_info = data.get("signal") or {}
         self._attr_native_value = signal_info.get("snr", "n-a")
         self.async_write_ha_state()
 
@@ -497,7 +497,7 @@ class RoombaNetworkNoise(RoombaSensor):
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
-        signal_info = data.get("signal")
+        signal_info = data.get("signal") or {}
         self._attr_native_value = signal_info.get("noise", "n-a")
         self.async_write_ha_state()
 
@@ -866,8 +866,8 @@ class RoombaTotalTime(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         runtimeStats = data.get("runtimeStats") or {}
-        hr = runtimeStats.get("hr")
-        timeMin = runtimeStats.get("min")
+        hr = runtimeStats.get("hr") or 0
+        timeMin = runtimeStats.get("min") or 0
         self._attr_native_value = (hr * 60) + timeMin
         self.async_write_ha_state()
 
