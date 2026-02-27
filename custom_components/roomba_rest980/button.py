@@ -40,7 +40,7 @@ class FavoriteButton(ButtonEntity):
         self._attr_extra_state_attributes = data
         self._data = data
         self._attr_icon = "mdi:star"
-        self._attr_entity_registry_enabled_default = not data["hidden"]
+        self._attr_entity_registry_enabled_default = not data.get("hidden", False)
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.unique_id)},
             "name": entry.title,
