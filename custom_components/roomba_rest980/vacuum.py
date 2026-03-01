@@ -141,7 +141,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             if regions:
                 payload = {
                     "ordered": 1,
-                    "pmap_id": self._attr_extra_state_attributes.get("pmap0_id", ""),
+                    "pmap_id": selected_rooms[0].pmap_id,
                     "regions": regions,
                 }
 
@@ -208,8 +208,8 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     async def async_send_command(
         self,
         command: str,
-        params: dict[str, Any] | list[Any] | None = None,
-        **kwargs: Any,
+        params: dict[str, any] | list[any] | None = None,
+        **kwargs: any,
     ) -> None:
         """Send a command to a vacuum cleaner."""
 
@@ -221,7 +221,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
                     "params": {
                         "noAutoPasses": False,
                         "twoPass": region.get("params", {}).get("twoPass"),
-                     },
+                    },
                 }
                 for region in params.get("regions", [])
             ]

@@ -67,6 +67,7 @@ class CleanRoomPasses(SelectEntity):
         self._entry = entry
         self._attr_unique_id = f"{entry.unique_id}_p_{data['id']}_{'z' if zone else 'r'}_{pmap['active_pmapv_details']['active_pmapv']['pmap_id']}"
         self._attached = f"{entry.unique_id}_{data['id']}_{'z' if zone else 'r'}_{pmap['active_pmapv_details']['active_pmapv']['pmap_id']}"
+        self.pmap_id = pmap["active_pmapv_details"]["active_pmapv"]["pmap_id"]
         self._attr_current_option = "Don't Clean"
         self._attr_options = ["Don't Clean", "One Pass", "Two Passes"]
         self._attr_entity_category = EntityCategory.CONFIG
