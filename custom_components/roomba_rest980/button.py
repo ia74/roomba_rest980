@@ -13,20 +13,15 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     """Create the switches to identify cleanable rooms."""
-    _LOGGER.warning("step 0")
     cloudCoordinator = entry.runtime_data.cloud_coordinator
     entities = []
-    _LOGGER.warning("step 1")
     if cloudCoordinator and cloudCoordinator.data:
-        _LOGGER.warning("step 2 ")
         blid = entry.runtime_data.robot_blid
         # Get cloud data for the specific robot
         if blid in cloudCoordinator.data:
-            _LOGGER.warning("step 3 ")
             cloud_data = cloudCoordinator.data[blid]
            
             if "pmaps" in cloud_data:
-                _LOGGER.warning("step 4")
                 for pmap in cloud_data["pmaps"]:
                     try:
                     
@@ -49,8 +44,8 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                             e,
                         )
                        
-    for ent in entities:
-        entry.runtime_data.switched_rooms[f"button.{ent.unique_id}"] = ent
+    #for ent in entities:
+    #    entry.runtime_data.switched_rooms[f"button.{ent.unique_id}"] = ent
     async_add_entities(entities)
 
 class RoomButton(ButtonEntity):
@@ -71,15 +66,17 @@ class RoomButton(ButtonEntity):
             "name": entry.title,
             "manufacturer": "iRobot",
         }
-        self.is_active = True
-        self.room_json = {
-            "region_id": data["id"],
-            "type": "rid",
-            "params": {"noAutoPasses": False, "twoPass": False},
-            }
+        self._room_data = data["id"]
+        
 
     async def async_press(self):
         """Send command out to clean with the ID."""
-        self.is_active = not self.is_active
+        
+        if f"button.{self._attr_unique_id}" in self._entry.runtime_data.rooms_to_clean:
+            del self._entry.runtime_data.rooms_to_clean[f"button.{self._attr_unique_id}"]
+        else:
+            self._entry.runtime_data.rooms_to_clean[f"button.{self._attr_unique_id}"] = self._room_data
+
         self._async_write_ha_state()
+        
        

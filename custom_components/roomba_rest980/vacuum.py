@@ -97,6 +97,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
 
     async def async_start(self):
         """Start cleaning floors, check if any are selected or just clean everything."""
+        _LOGGER.warning("chce zaczac sprzatac")
         data = self.coordinator.data or {}
         if data.get("phase") == "stop":
             await self.hass.services.async_call(
@@ -116,35 +117,47 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             regions = []
 
             # Check if we have room selection switches available
-            domain_data = self._entry.runtime_data.switched_rooms
-            selected_rooms = []
-
-            # Find all room switches that are turned on
-            for key, entity in domain_data.items():
-                if (
-                    key.startswith("select.")
-                    and hasattr(entity, "current_option")
-                    and entity.current_option != "Don't Clean"
-                ):
-                    selected_rooms.append(entity)
-
-            # If we have specific rooms selected, use targeted cleaning
-            if selected_rooms:
-                # Build regions list from selected rooms
-                regions = [
-                    room.get_region_json()
-                    for room in selected_rooms
-                    if hasattr(room, "get_region_json")
-                ]
-
+            selected_rooms = list(self._entry.runtime_data.rooms_to_clean.values())
+            _LOGGER.warning(selected_rooms)
+            if self._entry.runtime_data.vacuum_mode=="vacuum":
+                operatingMode=2
+            else:
+                operatingMode=6
+                
+            if self._entry.runtime_data.mop_mode=="low":
+                wetMode=1
+            elif self._entry.runtime_data.mop_mode=="medium":
+                wetMode=2
+            else:
+                wetMode=3
+               
+            params={
+                    "noAutoPasses":True,
+                    "operatingMode": operatingMode,
+                    "padWetness": {
+                        "disposable": wetMode,
+                        "reusable": wetMode,
+                    },
+                    "twoPass": False,
+                    "swScrub": 0,
+            }
             # If we have specific regions selected, use targeted cleaning
-            if regions:
+            if selected_rooms:
+                for room_id in selected_rooms:
+                    regions.append({
+                        "params":params,
+                        "type": "rid",
+                        "region_id": room_id,
+                    })
+                    
                 payload = {
                     "ordered": 1,
                     "pmap_id": self._attr_extra_state_attributes.get("pmap0_id", ""),
                     "regions": regions,
                 }
-
+                self._entry.runtime_data.rooms_to_clean.clear()
+                _LOGGER.warning(payload)
+                
                 await self.hass.services.async_call(
                     DOMAIN,
                     "rest980_clean",
@@ -161,7 +174,8 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
                     DOMAIN,
                     "rest980_clean",
                     service_data={
-                        "payload": {"action": "start"},
+                        #"payload": {"action": "start"},
+                        "payload":{"params": params},
                         "base_url": self._entry.data["base_url"],
                     },
                     blocking=True,
