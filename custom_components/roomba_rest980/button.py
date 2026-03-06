@@ -28,6 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                         entities.extend(
                             [
                                 RoomButton(
+                                    hass,
                                     entry,
                                     region["name"] or "Unnamed Room",
                                     region,
@@ -51,8 +52,9 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
 class RoomButton(ButtonEntity):
     """A button entity to initiate iRobot favorite routines."""
 
-    def __init__(self, entry, name, data, pmap) -> None:
+    def __init__(self, hass, entry, name, data, pmap) -> None:
         """Creates a button entity for entries."""
+        self.hass = hass
         self._attr_name = name
         self._entry = entry
         self._attr_unique_id = f"{entry.unique_id}_p_{data['id']}_{pmap['active_pmapv_details']['active_pmapv']['pmap_id']}"
@@ -76,6 +78,9 @@ class RoomButton(ButtonEntity):
             del self._entry.runtime_data.rooms_to_clean[f"button.{self._attr_unique_id}"]
         else:
             self._entry.runtime_data.rooms_to_clean[f"button.{self._attr_unique_id}"] = self._room_data
+        
+        vacuum = self.hass.data[DOMAIN][self._entry.entry_id]["vacuum"]
+        await vacuum.async_start()
 
         self._async_write_ha_state()
         

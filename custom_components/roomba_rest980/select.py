@@ -31,8 +31,8 @@ class VacuumModesSelect(SelectEntity):
         self._entry = entry
         self._attr_unique_id = f"{entry.unique_id}_ModeSelect"
         self._attached = self._attr_unique_id
-        self._attr_current_option = "vacuum"
-        self._attr_options = ["vacuum", "mop", "vacuum_and_mop"]
+        self._attr_current_option = "Sweeping"
+        self._attr_options = ["Sweeping", "Sweeping and mopping"]
         self._attr_entity_category = EntityCategory.CONFIG
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.unique_id)},

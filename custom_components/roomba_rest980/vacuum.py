@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_ROBOT = (
     VacuumEntityFeature.START
     | VacuumEntityFeature.RETURN_HOME
-    | VacuumEntityFeature.CLEAN_SPOT
+    #| VacuumEntityFeature.CLEAN_SPOT
     | VacuumEntityFeature.MAP
     | VacuumEntityFeature.SEND_COMMAND
     | VacuumEntityFeature.STATE
@@ -33,9 +33,13 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ):
     """Create the vacuum."""
+    vacuum = RoombaVacuum(hass, entry.runtime_data.local_coordinator, entry)
     async_add_entities(
-        [RoombaVacuum(hass, entry.runtime_data.local_coordinator, entry)]
+        [vacuum]
     )
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN].setdefault(entry.entry_id, {})
+    hass.data[DOMAIN][entry.entry_id]["vacuum"] = vacuum
 
 
 class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
@@ -44,6 +48,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     def __init__(self, hass: HomeAssistant, coordinator, entry: ConfigEntry) -> None:
         """Setup the robot."""
         super().__init__(coordinator)
+        
         self.hass = hass
         self._entry: ConfigEntry = entry
         self._attr_supported_features = SUPPORT_ROBOT
