@@ -11,6 +11,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.components.vacuum import Segment
 
 from .const import DOMAIN
 from .LegacyCompatibility import createExtendedAttributes
@@ -26,6 +27,7 @@ SUPPORT_ROBOT = (
     | VacuumEntityFeature.STATE
     | VacuumEntityFeature.STOP
     | VacuumEntityFeature.PAUSE
+    | VacuumEntityFeature.CLEAN_AREA
 )
 
 
@@ -99,6 +101,24 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
 
     async def async_clean_spot(self, **kwargs):
         """Spot clean."""
+        _LOGGER.warrning("async_clean_spot kwargs: %s", kwargs)
+
+    async def async_get_segments(self) -> list[Segment]:
+        """Get the segments that can be cleaned."""
+        segment = Segment(
+            id="room_1",
+            name="Salon",
+            group=None
+        )
+        segment2 = Segment(
+            id="room_2",
+            name="Lazienka",
+            group=None
+        )
+        return [segment, segment2]
+
+    async def async_clean_segments(self, segment_ids: list[str], **kwargs: Any) -> None:
+        """Perform an area clean."""
 
     async def async_start(self):
         """Start cleaning floors, check if any are selected or just clean everything."""
