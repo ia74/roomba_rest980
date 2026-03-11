@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
-    """Create the switches to identify cleanable rooms."""
+    """Create the buttons for each room."""
     cloudCoordinator = entry.runtime_data.cloud_coordinator
     entities = []
     if cloudCoordinator and cloudCoordinator.data:
@@ -24,7 +24,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             if "pmaps" in cloud_data:
                 for pmap in cloud_data["pmaps"]:
                     try:
-                    
                         entities.extend(
                             [
                                 RoomButton(

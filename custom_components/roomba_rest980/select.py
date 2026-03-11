@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
-    """Create the switches to identify cleanable rooms."""
+    """Create the switches to identify available cleaning modes."""
     entities = []
    
     entities.extend([VacuumModesSelect(entry)])
@@ -21,15 +21,15 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     async_add_entities(entities)
 
 class VacuumModesSelect(SelectEntity):
-    """A number entity to determine how many passes a room should be cleaned with."""
+    """Entity to determine which cleaning mode the vacuum should use."""
 
     def __init__(self, entry) -> None:
         """Creates a switch entity for rooms."""
         self._attr_name = (
-            f"Vacuum mode"
+            f"Cleaning mode"
         )
         self._entry = entry
-        self._attr_unique_id = f"{entry.unique_id}_ModeSelect"
+        self._attr_unique_id = f"{entry.unique_id}_mode_select"
         self._attached = self._attr_unique_id
         self._attr_current_option = "vacuum"
         self._attr_options = ["vacuum", "mop", "vacuum_and_mop"]
@@ -47,10 +47,9 @@ class VacuumModesSelect(SelectEntity):
         self._async_write_ha_state()
 
 class MopIntensitySelect(SelectEntity):
-    """A number entity to determine how many passes a room should be cleaned with."""
+    """Entity to determine which mop intensity the vacuum should use."""
 
     def __init__(self, entry) -> None:
-        """Creates a switch entity for rooms."""
         self._attr_name = (
             f"Mop intensity"
         )
