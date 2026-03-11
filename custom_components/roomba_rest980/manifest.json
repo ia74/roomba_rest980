@@ -2,7 +2,7 @@
   "domain": "roomba_rest980",
   "name": "Roomba (Rest980)",
   "codeowners": [
-    "@ia74"
+    "@ia74","@MonsterArtur1"
   ],
   "config_flow": true,
   "dependencies": [],
@@ -31,7 +31,7 @@
   "requirements": [
     "aiofiles==24.1.0"
   ],
-  "version": "1.18.0H",
+  "version": "1.18.1",
   "zeroconf": [
     {
       "type": "_amzn-alexa._tcp.local.",
