@@ -134,32 +134,11 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             # Get selected rooms from switches (if available)
             payload = []
             regions = []
+            params = self._build_clean_params()
 
             # Check if we have room selection switches available
             selected_rooms = list(self._entry.runtime_data.rooms_to_clean.values())
             _LOGGER.warning(selected_rooms)
-            if self._entry.runtime_data.vacuum_mode=="vacuum":
-                operatingMode=2
-            else:
-                operatingMode=6
-                
-            if self._entry.runtime_data.mop_mode=="low":
-                wetMode=1
-            elif self._entry.runtime_data.mop_mode=="medium":
-                wetMode=2
-            else:
-                wetMode=3
-               
-            params={
-                    "noAutoPasses":True,
-                    "operatingMode": operatingMode,
-                    "padWetness": {
-                        "disposable": wetMode,
-                        "reusable": wetMode,
-                    },
-                    "twoPass": False,
-                    "swScrub": 0,
-            }
             # If we have specific regions selected, use targeted cleaning
             if selected_rooms:
                 for room_id in selected_rooms:
