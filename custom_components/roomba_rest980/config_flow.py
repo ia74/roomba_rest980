@@ -35,6 +35,11 @@ class RoombaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow."""
 
     VERSION = 2
+    # VERSION = 3
+
+    # async def async_migrate_entry(self, config_entry):
+    #     """Migrate an entry from MD5 of the server URL to the BLID of the robot."""
+    #     _LOGGER.debug("Migrating from version %s", config_entry.version)
 
     _proposed_name: str
     _user_data: dict[str, any]
