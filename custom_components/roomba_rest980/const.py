@@ -18,6 +18,7 @@ notReadyMappings = {
 
 ## Some mappings thanks to https://github.com/NickWaterton/Roomba980-Python/blob/master/roomba/roomba.py
 errorMappings = {
+    -1: "Unknown Roomba Error",
     0: "n-a",
     15: "Reboot Required",
     18: "Docking Issue",
@@ -98,6 +99,7 @@ errorMappings = {
     122: "Charging system error",
     123: "Battery not initialized",
     216: "Charging base bag full",
+    1010: "Clear Roomba's Path"
 }
 
 cycleMappings = {
