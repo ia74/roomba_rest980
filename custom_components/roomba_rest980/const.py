@@ -6,11 +6,13 @@ DOMAIN = "roomba_rest980"
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=10)  # or whatever interval you want
 
 notReadyMappings = {
+    -1: "Unknown Ready Status",
     0: "n-a",
     2: "Uneven Ground",
     16: "Bumped Unexpectedly",
     15: "Low Battery",
     31: "Fill Tank",
+	34: "Not Ready",
     39: "Pending",
     48: "Path Blocked",
     68: "Updating Map",

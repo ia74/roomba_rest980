@@ -760,7 +760,7 @@ class RoombaNotReady(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         nr = data.get("cleanMissionStatus", {}).get("notReady")
-        self._attr_native_value = notReadyMappings.get(nr, nr)
+        self._attr_native_value = notReadyMappings.get(nr, "Unknown Ready Status")
 
         self.async_write_ha_state()
 
