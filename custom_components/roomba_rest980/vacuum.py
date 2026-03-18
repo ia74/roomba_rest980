@@ -1,5 +1,6 @@
 """The vacuum."""
 
+import asyncio
 import logging
 from typing import Any
 
@@ -60,7 +61,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     def __init__(self, hass: HomeAssistant, coordinator, entry: ConfigEntry) -> None:
         """Setup the robot."""
         super().__init__(coordinator)
-        
+
         self.hass = hass
         self._entry: ConfigEntry = entry
         self._attr_supported_features = SUPPORT_ROBOT
@@ -72,6 +73,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         """Update all attributes."""
         data = self.coordinator.data or {}
         status = data.get("cleanMissionStatus", {})
+        bin_data = data.get("bin") or {}
         cycle = status.get("cycle")
         phase = status.get("phase")
         not_ready = status.get("notReady")
@@ -94,8 +96,23 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             self._attr_activity = VacuumActivity.RETURNING
 
         self._attr_available = data != {}
-        self._attr_extra_state_attributes = createExtendedAttributes(self)
+        self._attr_battery_level = data.get("batPct")
+
+        extra_attributes = createExtendedAttributes(self)
+        extra_attributes.update(
+            {
+                "battery_level": self._attr_battery_level,
+                "bin_full": bin_data.get("full"),
+                "bin_present": bin_data.get("present"),
+            }
+        )
+        self._attr_extra_state_attributes = extra_attributes
         self._async_write_ha_state()
+
+    @property
+    def battery_level(self) -> int | None:
+        """Return the vacuum battery level as expected by HA vacuum cards."""
+        return self.coordinator.data.get("batPct") if self.coordinator.data else None
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -118,7 +135,10 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         """Start cleaning floors, check if any are selected or just clean everything."""
         _LOGGER.warning("chce zaczac sprzatac")
         data = self.coordinator.data or {}
-        if data.get("phase") == "stop":
+        status = data.get("cleanMissionStatus", {})
+        phase = status.get("phase")
+
+        if phase in {"stop", "pause"}:
             await self.hass.services.async_call(
                 DOMAIN,
                 "rest980_action",
@@ -207,6 +227,16 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
 
     async def async_return_to_base(self):
         """Calls the Roomba back to its dock."""
+        await self.hass.services.async_call(
+            DOMAIN,
+            "rest980_action",
+            service_data={
+                "action": "pause",
+                "base_url": self._entry.data["base_url"],
+            },
+            blocking=True,
+        )
+        await asyncio.sleep(2)
         await self.hass.services.async_call(
             DOMAIN,
             "rest980_action",
