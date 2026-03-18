@@ -133,9 +133,12 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
 
     async def async_start(self):
         """Start cleaning floors, check if any are selected or just clean everything."""
-        _LOGGER.warning("chce zaczac sprzatac")
         data = self.coordinator.data or {}
-        if data.get("phase") == "stop":
+        status = data.get("cleanMissionStatus", {})
+        phase = status.get("phase")
+        cycle = status.get("cycle")
+
+        if phase in {"stop", "pause"} or (cycle == "none" and phase == "resume"):
             await self.hass.services.async_call(
                 DOMAIN,
                 "rest980_action",
