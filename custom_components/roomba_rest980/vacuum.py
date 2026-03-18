@@ -77,23 +77,26 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         cycle = status.get("cycle")
         phase = status.get("phase")
         not_ready = status.get("notReady")
+        paused_activity = getattr(VacuumActivity, "PAUSED", VacuumActivity.IDLE)
 
         self._attr_activity = VacuumActivity.IDLE
         if cycle == "none" and not_ready == 39:
             self._attr_activity = VacuumActivity.IDLE
-        if not_ready and not_ready > 0:
+        elif not_ready and not_ready > 0:
             self._attr_activity = VacuumActivity.ERROR
-        if cycle in ["clean", "quick", "spot", "train"] or phase in {"hwMidMsn"}:
-            self._attr_activity = VacuumActivity.CLEANING
-        if cycle in ["evac", "dock"] or phase in {
-            "charge",
-        }:  # Emptying Roomba Bin to Dock, Entering Dock
-            self._attr_activity = VacuumActivity.DOCKED
-        if phase in {
+        elif phase in {"pause", "stop"}:
+            self._attr_activity = paused_activity
+        elif phase in {
             "hmUsrDock",
             "hmPostMsn",
         }:  # Sent Home, Mid Dock, Final Dock
             self._attr_activity = VacuumActivity.RETURNING
+        elif cycle in ["evac", "dock"] or phase in {
+            "charge",
+        }:  # Emptying Roomba Bin to Dock, Entering Dock
+            self._attr_activity = VacuumActivity.DOCKED
+        elif cycle in ["clean", "quick", "spot", "train"] or phase in {"hwMidMsn"}:
+            self._attr_activity = VacuumActivity.CLEANING
 
         self._attr_available = data != {}
         self._attr_battery_level = data.get("batPct")
