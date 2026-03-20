@@ -85,6 +85,8 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             self._attr_activity = VacuumActivity.ERROR
         if cycle in ["clean", "quick", "spot", "train"] or phase in {"hwMidMsn"}:
             self._attr_activity = VacuumActivity.CLEANING
+        if phase in {"stop", "pause"}:
+            self._attr_activity = VacuumActivity.PAUSED
         if cycle in ["evac", "dock"] or phase in {
             "charge",
         }:  # Emptying Roomba Bin to Dock, Entering Dock
@@ -94,6 +96,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             "hmPostMsn",
         }:  # Sent Home, Mid Dock, Final Dock
             self._attr_activity = VacuumActivity.RETURNING
+
 
         self._attr_available = data != {}
         self._attr_battery_level = data.get("batPct")
