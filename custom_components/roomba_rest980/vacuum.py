@@ -21,12 +21,6 @@ from .LegacyCompatibility import createExtendedAttributes
 _LOGGER = logging.getLogger(__name__)
 
 # HA 2026.3+ area cleaning support (Segment dataclass + CLEAN_AREA feature flag)
-try:
-    from homeassistant.components.vacuum import Segment
-
-    _HAS_CLEAN_AREA = hasattr(VacuumEntityFeature, "CLEAN_AREA")
-except ImportError:
-    _HAS_CLEAN_AREA = False
 
 SUPPORT_ROBOT = (
     VacuumEntityFeature.START
@@ -36,12 +30,8 @@ SUPPORT_ROBOT = (
     | VacuumEntityFeature.STATE
     | VacuumEntityFeature.STOP
     | VacuumEntityFeature.PAUSE
+    | VacuumEntityFeature.CLEAN_AREA
 )
-
-if _HAS_CLEAN_AREA:
-    SUPPORT_ROBOT = SUPPORT_ROBOT | VacuumEntityFeature.CLEAN_AREA
-
-
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ):
