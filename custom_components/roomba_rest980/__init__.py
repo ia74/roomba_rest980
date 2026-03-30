@@ -60,7 +60,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if entry.data["cloud_api"]:
         cloud_coordinator = RoombaCloudCoordinator(hass, entry)
         try:
-            await cloud_coordinator.async_config_entry_first_refresh()
 
             # Start background task for cloud setup and BLID matching
             hass.async_create_task(
@@ -173,7 +172,8 @@ async def _async_setup_cloud(
         else:
             # Use stored BLID from config entry
             entry.runtime_data.robot_blid = entry.data["robot_blid"]
-
+        if cloud_coordinator:
+            await cloud_coordinator.async_config_entry_first_refresh()
         await hass.config_entries.async_forward_entry_setups(
             entry, ["select", "button", "camera"]
         )
