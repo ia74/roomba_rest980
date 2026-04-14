@@ -498,7 +498,7 @@ class RoombaNetworkNoise(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         signal_info = data.get("signal") or {}
-        self._attr_native_value = signal_info.get("noise", "n-a")
+        self._attr_native_value = signal_info.get("noise", None)
         self.async_write_ha_state()
 
 

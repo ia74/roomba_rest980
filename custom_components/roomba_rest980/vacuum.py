@@ -55,6 +55,9 @@ async def async_setup_entry(
     hass.data[DOMAIN][entry.entry_id]["vacuum"] = vacuum
 
 
+PENDING_UPLOAD = 39
+NOT_AVAILABLE = 0
+
 class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     """The Rest980 controlled vacuum."""
 
@@ -79,18 +82,23 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         not_ready = status.get("notReady")
 
         self._attr_activity = VacuumActivity.IDLE
-        if cycle == "none" and not_ready == 39:
+        if cycle == "none" and not_ready == PENDING_UPLOAD:
             self._attr_activity = VacuumActivity.IDLE
-        if not_ready and not_ready > 0:
+        
+        if not_ready and not_ready > NOT_AVAILABLE: # Not ready, and code is an error
             self._attr_activity = VacuumActivity.ERROR
-        if cycle in ["clean", "quick", "spot", "train"] or phase in {"hwMidMsn"}:
+        
+        if cycle in {"clean", "quick", "spot", "train"} or phase in {"hwMidMsn"}:
             self._attr_activity = VacuumActivity.CLEANING
+        
         if phase in {"stop", "pause"}:
             self._attr_activity = VacuumActivity.PAUSED
-        if cycle in ["evac", "dock"] or phase in {
+        
+        if cycle in {"evac", "dock"} or phase in {
             "charge",
         }:  # Emptying Roomba Bin to Dock, Entering Dock
             self._attr_activity = VacuumActivity.DOCKED
+        
         if phase in {
             "hmUsrDock",
             "hmPostMsn",
@@ -130,9 +138,20 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             sw_version=data.get("softwareVer"),
         )
 
+    async def call_rest980_action(self, action):
+        await self.hass.services.async_call(
+            DOMAIN,
+            "rest980_action",
+            service_data={
+                "action": action,
+                "base_url": self._entry.data["base_url"],
+            },
+            blocking=True,
+        )
+
     async def async_clean_spot(self, **kwargs):
         """Spot clean."""
-        _LOGGER.warrning("async_clean_spot kwargs: %s", kwargs)
+        #NOTE: I believe this is a cloud method
 
     async def async_start(self):
         """Start cleaning floors, check if any are selected or just clean everything."""
@@ -142,15 +161,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         cycle = status.get("cycle")
 
         if phase in {"stop", "pause"} or (cycle == "none" and phase == "resume"):
-            await self.hass.services.async_call(
-                DOMAIN,
-                "rest980_action",
-                service_data={
-                    "action": "resume",
-                    "base_url": self._entry.data["base_url"],
-                },
-                blocking=True,
-            )
+            self.call_rest980_action("resume")
             return
 
         try:
@@ -206,49 +217,17 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
 
     async def async_stop(self) -> None:
         """Stop the action."""
-        await self.hass.services.async_call(
-            DOMAIN,
-            "rest980_action",
-            service_data={
-                "action": "stop",
-                "base_url": self._entry.data["base_url"],
-            },
-            blocking=True,
-        )
+        await self.call_rest980_action("stop")
 
     async def async_pause(self):
         """Pause the current action."""
-        await self.hass.services.async_call(
-            DOMAIN,
-            "rest980_action",
-            service_data={
-                "action": "pause",
-                "base_url": self._entry.data["base_url"],
-            },
-            blocking=True,
-        )
+        await self.call_rest980_action("pause")
 
     async def async_return_to_base(self):
         """Calls the Roomba back to its dock."""
-        await self.hass.services.async_call(
-            DOMAIN,
-            "rest980_action",
-            service_data={
-                "action": "pause",
-                "base_url": self._entry.data["base_url"],
-            },
-            blocking=True,
-        )
+        await self.call_rest980_action("pause")
         await asyncio.sleep(2)
-        await self.hass.services.async_call(
-            DOMAIN,
-            "rest980_action",
-            service_data={
-                "action": "dock",
-                "base_url": self._entry.data["base_url"],
-            },
-            blocking=True,
-        )
+        await self.call_rest980_action("dock")
 
     # --- HA 2026.3 vacuum area cleaning support ---
 
