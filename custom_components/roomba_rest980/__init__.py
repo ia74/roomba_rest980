@@ -121,7 +121,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
                 if response.status != 200:
                     _LOGGER.error("Failed to send clean command: %s", response.status)
                 else:
-                    _LOGGER.debug("Action sent successfully")
+                    _LOGGER.debug(f"Action {action} sent successfully")
         except Exception as e:  # pylint: disable=broad-except
             _LOGGER.error("Error sending clean command: %s", e)
 
@@ -190,7 +190,7 @@ async def _async_match_blid(
 ) -> None:
     """Match local Roomba with cloud robot by comparing device info."""
     try:
-        _LOGGER.error("Attributes received: %s", cloud_coordinator.data.items())
+        _LOGGER.debug("Attributes received: %s", cloud_coordinator.data.items())
         for blid, robo in cloud_coordinator.data.items():
             if not isinstance(robo, dict):
                 continue
@@ -214,7 +214,7 @@ async def _async_match_blid(
                     and cloud_name == local_name
                 ):
                     entry.runtime_data.robot_blid = blid
-                    _LOGGER.info("Matched local Roomba with cloud robot %s", blid)
+                    _LOGGER.debug("Matched local Roomba with cloud robot %s", blid)
                     break
 
             except (KeyError, TypeError) as e:

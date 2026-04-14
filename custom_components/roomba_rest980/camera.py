@@ -72,11 +72,11 @@ async def async_setup_entry(
     cloudCoordinator = entry.runtime_data.cloud_coordinator
 
     if not cloudCoordinator:
-        _LOGGER.warning("No cloud coordinator found for camera setup")
+        _LOGGER.error("No cloud coordinator found for camera setup")
         return
 
     if not cloudCoordinator.data:
-        _LOGGER.warning("Cloud coordinator has no data yet for camera setup")
+        _LOGGER.error("Cloud coordinator has no data yet for camera setup")
         return
 
     entities = []
@@ -95,7 +95,7 @@ async def async_setup_entry(
                 _LOGGER.debug("Checking for UMF data key: %s", umf_key)
 
                 if umf_key in cloud_data:
-                    _LOGGER.info("Creating camera entity for pmap %s", pmap_id)
+                    _LOGGER.debug("Creating camera entity for pmap %s", pmap_id)
                     entities.append(
                         RoombaMapCamera(
                             cloudCoordinator, entry, pmap_id, cloud_data[umf_key]
@@ -114,7 +114,7 @@ async def async_setup_entry(
         _LOGGER.info("Adding %d camera entities", len(entities))
         async_add_entities(entities)
     else:
-        _LOGGER.warning("No camera entities created")
+        _LOGGER.error("No camera entities created")
 
 
 class RoombaMapCamera(Camera):

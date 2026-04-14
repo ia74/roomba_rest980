@@ -416,7 +416,7 @@ class iRobotCloudApi:
             if response.status != 200:
                 if response.status == 403:
                     await self.authenticate()
-                    _LOGGER.info("Reauthenticating API")
+                    _LOGGER.debug("Reauthenticating API")
                     return await self._aws_request(url, params)
                 raise CloudApiError(f"AWS request failed: {response.status}")
 
@@ -475,7 +475,7 @@ class iRobotCloudApi:
             "mission_history": await self.get_mission_history(blid),
             "pmaps": await self.get_pmaps(blid),
         }
-        _LOGGER.info("Data for robot %s: %s", blid, robot_data["robot_info"])
+        _LOGGER.debug("Data for robot %s: %s", blid, robot_data["robot_info"])
 
         # Get UMF data for active pmaps
         for pmap in robot_data["pmaps"]:
@@ -506,7 +506,7 @@ class iRobotCloudApi:
         for blid in self.robots:
             try:
                 all_data[blid] = await self.get_robot_data(blid)
-                _LOGGER.info("Retrieved data for robot %s", blid)
+                _LOGGER.debug("Retrieved data for robot %s", blid)
             except CloudApiError as e:
                 _LOGGER.error("Failed to get data for robot %s: %s", blid, e)
                 all_data[blid] = {"error": str(e)}
