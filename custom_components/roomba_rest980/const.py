@@ -140,6 +140,8 @@ binMappings = {True: "Full", False: "Not Full"}
 yesNoMappings = {True: "Yes", False: "No"}
 
 cleanBaseMappings = {
+    -1: "Unknown", # Added for RoombaCleanBase
+    -2: "Not Available",
     300: "Ready",
     301: "Ready",
     302: "Empty",

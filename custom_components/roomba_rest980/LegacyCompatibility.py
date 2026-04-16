@@ -110,10 +110,10 @@ def createExtendedAttributes(self) -> dict[str, any]:
     sqft = runtimeStats.get("sqft") if runtimeStats is not None else None
     hr = runtimeStats.get("hr") if runtimeStats is not None else None
     timeMin = runtimeStats.get("min") if runtimeStats is not None else None
-    # Mission total(s?)
+    # Mission totals
     bbmssn = data.get("bbmssn") or {}
     numMissions = bbmssn.get("nMssn")
-    # Run total(s?)
+    # Run totals
     bbrun = data.get("bbrun") or {}
     numDirt = bbrun.get("nScrubs")
     numEvacs = bbrun.get("nEvacs")
@@ -132,13 +132,11 @@ def createExtendedAttributes(self) -> dict[str, any]:
     else:
         robotCleanMode = "n-a"
 
-    # Bezpieczne przeliczanie powierzchni
     if isinstance(sqft, (int, float)):
         total_area = f"{round(sqft / 10.764 * 100)}m²"
     else:
         total_area = None
 
-    # Bezpieczne łączenie czasu
     if hr is not None and timeMin is not None:
         total_time = f"{hr}h {timeMin}m"
     else:

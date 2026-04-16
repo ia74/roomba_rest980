@@ -415,8 +415,12 @@ class RoombaCleanBase(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         dock = data.get("dock") or {}
-        dockState = dock.get("state")
-        self._attr_native_value = cleanBaseMappings.get(dockState, "Unknown")
+        known = dock.get("known", False)
+        if not known:
+            self._attr_native_value = "Not Available"
+        else:
+            dockState = dock.get("state")
+            self._attr_native_value = cleanBaseMappings.get(dockState, "Unknown")
         self.async_write_ha_state()
 
 
