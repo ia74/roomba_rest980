@@ -15,7 +15,7 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .CloudApi import iRobotCloudApi, AuthenticationError, CloudApiError
+from .misc.CloudApi import iRobotCloudApi, AuthenticationError, CloudApiError
 from .const import DEFAULT_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)

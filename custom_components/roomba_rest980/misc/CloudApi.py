@@ -17,6 +17,8 @@ import uuid
 import aiofiles
 import aiohttp
 
+from const import DISCOVERY_ENDPOINT
+
 _LOGGER = logging.getLogger(__name__)
 
 # Debug: Save UMF data to file for analysis
@@ -190,9 +192,7 @@ class iRobotCloudApi:
 
     async def discover_endpoints(self) -> dict[str, Any]:
         """Discover deployment endpoints."""
-        discovery_url = (
-            "https://disc-prod.iot.irobotapi.com/v1/discover/endpoints?country_code=US"
-        )
+        discovery_url = DISCOVERY_ENDPOINT
 
         async with self.session.get(discovery_url) as response:
             if response.status != 200:

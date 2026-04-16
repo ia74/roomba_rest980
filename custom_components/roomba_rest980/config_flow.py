@@ -11,7 +11,7 @@ from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .CloudApi import AuthenticationError, iRobotCloudApi
+from .misc.CloudApi import AuthenticationError, iRobotCloudApi
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,11 +35,21 @@ class RoombaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow."""
 
     VERSION = 2
-    # VERSION = 3
 
-    # async def async_migrate_entry(self, config_entry):
-    #     """Migrate an entry from MD5 of the server URL to the BLID of the robot."""
-    #     _LOGGER.debug("Migrating from version %s", config_entry.version)
+    # async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
+    #     if user_input is not None:
+    #         # TODO: process user input
+    #         self.async_set_unique_id(user_id)
+    #         self._abort_if_unique_id_mismatch()
+    #         return self.async_update_reload_and_abort(
+    #             self._get_reconfigure_entry(),
+    #             data_updates=data,
+    #         )
+
+    #     return self.async_show_form(
+    #         step_id="reconfigure",
+    #         data_schema=vol.Schema({vol.Required("input_parameter"): str}),
+    #     )
 
     _proposed_name: str
     _user_data: dict[str, any]

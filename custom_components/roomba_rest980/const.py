@@ -4,6 +4,7 @@ from datetime import timedelta
 
 DOMAIN = "roomba_rest980"
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=10)  # or whatever interval you want
+DISCOVERY_ENDPOINT = "https://disc-prod.iot.irobotapi.com/v1/discover/endpoints?country_code=US"
 
 notReadyMappings = {
     -1: "Unknown Ready Status",

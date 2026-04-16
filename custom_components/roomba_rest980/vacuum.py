@@ -14,7 +14,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .LegacyCompatibility import createExtendedAttributes
+from .misc.ExtendedAttributes import createExtendedAttributes
 
 _LOGGER = logging.getLogger(__name__)
 
