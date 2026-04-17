@@ -2,42 +2,44 @@
 
 Integrate your iRobot Roomba and Braava Jets with Home Assistant using rest980, and the cloud (optional).
 
+## Features
+
+| Feature | Local | Cloud |
+|---------|-------|-------|
+| Roomba Vacuum support | [x] | [x] |
+| Braava Mop support | [x] | [x] |
+| HA Vacuum Entity | [x] | [x] |
+| Cloud MQTT | [ ] | [ ] |
+| Selective Room Cleaning | [x] | [x] |
+| Two Pass | [x] | [x] |
+| Grab rooms dynamically | [ ] | [x] |
+| Map Image | J | [x] |
+| Favorites |  | [x] |
+| Start Jobs | [x] | [x] |
+| Pause / Resume | [x] | [x] |
+| Return Home | [x] | [x] |
+| Spot Clean | [ ] | [ ] |
+| Mapping Run | [ ] | [ ] |
+| Maintenance Parts | [ ] | [ ] |
+| Schedules | [ ] | [ ] |
+| Entity attribute parity with jeremywillans' YAML config entry | [x] |  |
+| Real-time map view | J | J |
+| Real-time robot position | J | J |
+| Locally grab rooms | P | |
+| [Timeline Report from newer iRobot app](https://github.com/ia74/roomba_rest980/issues/4#issuecomment-3694259760) | | P |
+
+P: Planned  
+J: Planned, requires jailbreak
+
+> I've reverse engineered their MQTT stack and am working on incorporating it into [dorita/rest980.](https://github.com/ia74/dorita980/blob/master/lib/v2/cloud.js)
+
+> [A jailbreak method has been found, but isn't ready for the public! (public release WIP)](https://community.home-assistant.io/t/roomba-i7-rest980-with-selective-room-cleaning-integrate-your-irobot-roomba-with-home-assistant/921713/15?u=ia74)
+
 ## Note about Braava
 
 As I don't own a Braava Jet mop, the support for it is purely maintained [by the community and their help!](https://github.com/ia74/roomba_rest980/issues/12) Thus, I can't bug-test the integration with as much time as I can the vacuum part. If you run into any issues, [make an issue and I'll work on fixing them!](https://github.com/ia74/roomba_rest980/issues/new)
 
-## Features
-
-- [x] Native Vacuum entity
-- [x] Cloud API connection
-  - [x] Cloud HTTP methods
-  - [ ] Cloud MQTT connection
-    - I've reverse engineered their MQTT stack and am working on incorporating it into [dorita/rest980.](https://github.com/ia74/dorita980/blob/master/lib/v2/cloud.js)
-- [x] Selective room cleaning
-  - [x] Two pass feature
-  - [x] (Cloud only) Dynamically grab rooms and add them to the UI
-  - [x] Grab room data
-  - [x] Create map image
-- [x] Favorites
-- [x] Start
-  - [x] Clean all rooms by default
-- [x] Pause
-- [ ] Unpause
-- [x] Stop
-- [x] Return Home
-- [ ] Spot Clean
-- [ ] Mapping Run
-- [ ] Maintenance parts
-- [ ] Schedules
-- [ ] Real-time map view
-  - [Requires jailbreaking robot (public release WIP)](https://community.home-assistant.io/t/roomba-i7-rest980-with-selective-room-cleaning-integrate-your-irobot-roomba-with-home-assistant/921713/15?u=ia74)
-  - [ ] Real-time room position entity
-  - [ ] Real-time robot position entity
-- [ ] Locally grab rooms and add them to the UI
-- [ ] [(Maybe) Timeline Report from newer iRobot app](https://github.com/ia74/roomba_rest980/issues/4#issuecomment-3694259760)
-- [x] Entity attribute parity with jeremywillans' YAML config entry
-
-## Why?
+## Why make roomba_rest980?
 
 I found that working with [jeremywillans/ha-rest980-roomba](https://github.com/jeremywillans/ha-rest980-roomba) was nice and almost effortless, but I'd prefer to not have a YAML configuration and work with it by a more native integration that adds entities and isn't bound to making a lot of helpers per room.
 
@@ -49,11 +51,11 @@ I found that working with [jeremywillans/ha-rest980-roomba](https://github.com/j
 - rest980
   - If you don't have it yet, don't worry; this guide will show you how to add it.
 - Rooms mapped/setup in iRobot app
-  - Note that everytime you remap and a room changes, it's ID may change (local users)!
+  - Local users: Note that everytime you remap, room IDs will need to be re-setup.
 - Knowledge of your Roomba and rest980 servers' IPs
 
 > I recommend that you use [https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card](https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card) as this is almost done being integrated with it.  
-> The only feature that requires testing is the selection of rooms (is separate from using the switch-based built in).
+> The only feature that requires testing is the selection of rooms (is separate from using the select-based built in).
 
 ## Step 1: Setting up rest980: Grab Robot Credentials
 
@@ -169,7 +171,7 @@ When you install the integration and restart Home Assistant, you may notice it p
 
 This is not due to your rest980 API server being discovered, rather the integration finding your Roomba on the local network.
 
-> If you do not see this, that is okay; it only means HA was able to fully detect a roomba through it's network identifiers.
+> If you do not see this, that is okay; it only means HA was able to fully detect a roomba through zeroconf/uPnP.
 
 ## Step 3: Adding your Roomba!
 
@@ -201,7 +203,9 @@ If all has gone right, checking the device will show something like this:
 
 ## Step 3.5: Cloud issues.. (Cloud)
 
-iRobot does some unknown things with their cloud API. As of current, my implementation does not use the cloud MQTT server (yet), only their HTTP API. However, even with the iRobot app and every instance of a connection closed, you may get ratelimited (*sometimes*) with the error "No mqtt slot available". The integration handles this by auto-reloading. The local state is not interrupted.
+iRobot has strict rate limiting with their cloud API. As of current, my implementation does not use the cloud MQTT server (yet), only their HTTP API.
+
+However, even with the iRobot app and every connection closed, you may get ratelimited (*sometimes*) with the error "No mqtt slot available". The integration handles this by auto-reloading. The local state is not interrupted.
 
 ## Step 4: Rooms! (Cloud)
 
@@ -238,7 +242,7 @@ From this part on, the guide will not diverge into Cloud/Local unless required a
 
 ## Step 5: Robot Maintenance / Done!
 
-> Unfortunately, this is not implemented yet..
+> Unfortunately, this is not implemented yet.. If you made it here, you're finished! Enjoy your Roomba!
 
 ## "Backwards" Compatibility
 
