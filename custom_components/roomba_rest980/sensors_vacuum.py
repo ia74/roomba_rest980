@@ -1,25 +1,25 @@
+"""The Roomba Vacuum specific sensors."""
+
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
     PERCENTAGE,
-    UnitOfArea,
-    UnitOfTime,
     SIGNAL_STRENGTH_DECIBELS,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    UnitOfArea,
+    UnitOfTime,
 )
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.util import dt as dt_util
 
-from const import (
+from .const import (
     cleanBaseMappings,
     errorMappings,
     jobInitiatorMappings,
-    mopRanks,
     notReadyMappings,
-    padMappings,
     phaseMappings,
 )
-from RoombaSensor import RoombaCloudSensor, RoombaSensor
+from .RoombaSensor import RoombaCloudSensor, RoombaSensor
+
 
 class RoombaBatterySensor(RoombaSensor):
     """Read the battery level of the Roomba."""
@@ -120,6 +120,13 @@ class RoombaCloudPmap(RoombaCloudSensor):
         super().__init__(coordinator, entry)
 
         self._attr_extra_state_attributes = pmap
+
+    def _handle_coordinator_update(self):
+        """Update sensor when coordinator data changes."""
+        self._attr_native_value = (
+            "Available" if self.coordinator.data else "Unavailable"
+        )
+        self.async_write_ha_state()
 
 
 class RoombaPhase(RoombaSensor):

@@ -17,7 +17,7 @@ import uuid
 import aiofiles
 import aiohttp
 
-from const import DISCOVERY_ENDPOINT
+from .const import DISCOVERY_ENDPOINT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -447,13 +447,11 @@ class iRobotCloudApi:
         url = f"{self.deployment['httpBaseAuth']}/v1/{blid}/pmaps/{pmap_id}/versions/{version_id}/umf"
         params = {"activeDetails": "2"}
 
-        umf_data = await self._aws_request(url, params)
+        return await self._aws_request(url, params)
 
         # Save UMF data for debugging/camera development
         # TODO: Enable during development.
         # await self._save_umf_data_for_debug(pmap_id, umf_data)
-
-        return umf_data
 
     async def get_favorites(self) -> dict[str, Any]:
         """Get favorite cleaning routines."""

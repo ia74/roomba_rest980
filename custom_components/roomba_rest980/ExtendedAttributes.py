@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from ..const import (
+from .const import (
     binMappings,
     cleanBaseMappings,
     cycleMappings,
@@ -69,7 +69,7 @@ def createExtendedAttributes(self) -> dict[str, any]:
     if rechargeTime and rechargeTime != 0:
         time = datetime.fromtimestamp(rechargeTime)
         resume = round((datetime.now().timestamp() - time.timestamp()) / 60)
-        if 'elapsed' in locals() and elapsed > 60:
+        if "elapsed" in locals() and elapsed > 60:
             jobResumeTime = f"{resume // 60}h {f'{resume % 60:0>2d}'}m"
         else:
             jobResumeTime = f"{resume}m"
@@ -78,7 +78,7 @@ def createExtendedAttributes(self) -> dict[str, any]:
     if expireTime and expireTime != 0:
         time = datetime.fromtimestamp(expireTime)
         expire = round((datetime.now().timestamp() - time.timestamp()) / 60)
-        if 'elapsed' in locals() and elapsed > 60:
+        if "elapsed" in locals() and elapsed > 60:
             jobExpireTime = f"{expire // 60}h {f'{expire % 60:0>2d}'}m"
         else:
             jobExpireTime = f"{expire}m"

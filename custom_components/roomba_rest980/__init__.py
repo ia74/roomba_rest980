@@ -70,9 +70,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             # Update runtime data with cloud coordinator
             entry.runtime_data.cloud_coordinator = cloud_coordinator
         except Exception as e:  # pylint: disable=broad-except
-            _LOGGER.warning(
-                "Cloud API unavailable, continuing with local only: %s", e
-            )
+            _LOGGER.warning("Cloud API unavailable, continuing with local only: %s", e)
             cloud_coordinator = None
     else:
         cloud_coordinator = None
@@ -121,7 +119,7 @@ async def _async_register_services(hass: HomeAssistant) -> None:
                 if response.status != 200:
                     _LOGGER.error("Failed to send clean command: %s", response.status)
                 else:
-                    _LOGGER.debug(f"Action {action} sent successfully")
+                    _LOGGER.debug("Action %s sent successfully", action)
         except Exception as e:  # pylint: disable=broad-except
             _LOGGER.error("Error sending clean command: %s", e)
 

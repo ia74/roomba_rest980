@@ -1,25 +1,12 @@
-from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.const import (
-    PERCENTAGE,
-    UnitOfArea,
-    UnitOfTime,
-    SIGNAL_STRENGTH_DECIBELS,
-    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
-)
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
-from homeassistant.util import dt as dt_util
+"""The Roomba Mop specific sensors."""
 
-from const import (
-    cleanBaseMappings,
-    errorMappings,
-    jobInitiatorMappings,
-    mopRanks,
-    notReadyMappings,
-    padMappings,
-    phaseMappings,
-)
-from RoombaSensor import RoombaCloudSensor, RoombaSensor
+from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.const import PERCENTAGE
+from homeassistant.helpers.entity import EntityCategory
+
+from .const import mopRanks, padMappings
+from .RoombaSensor import RoombaSensor
+
 
 class MopCleanMode(RoombaSensor):
     """A simple sensor that returns the clean mode of the mop."""
@@ -33,18 +20,13 @@ class MopCleanMode(RoombaSensor):
         # self._attr_options = list(cleanBaseMappings.values()) #TODO: Update with real value list
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:auto-mode"
-        data = self.coordinator.data or {}
-        padWetness = data.get("padWetness")
-        if not padWetness:
-            self._attr_entity_registry_enabled_default = False
-            self.async_write_ha_state()
-            return
-    
+
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         padWetness = data.get("padWetness")
-        if not padWetness: return
+        if not padWetness:
+            return
         if isinstance(padWetness, dict):
             # priority: disposable > reusable
             if "disposable" in padWetness:
@@ -79,12 +61,6 @@ class MopBehavior(RoombaSensor):
         ]
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:shimmer"
-        data = self.coordinator.data or {}
-        padWetness = data.get("padWetness")
-        if not padWetness:
-            self._attr_entity_registry_enabled_default = False
-            self.async_write_ha_state()
-            return
 
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
@@ -126,12 +102,6 @@ class MopPad(RoombaSensor):
         self._attr_options = list(padMappings.values())
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:shimmer"
-        data = self.coordinator.data or {}
-        padWetness = data.get("padWetness")
-        if not padWetness:
-            self._attr_entity_registry_enabled_default = False
-            self.async_write_ha_state()
-            return
 
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
@@ -153,12 +123,6 @@ class MopTank(RoombaSensor):
         self._attr_options = ["Fill Tank", "Ready", "Lid Open", "Tank Missing"]
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:shimmer"
-        data = self.coordinator.data or {}
-        padWetness = data.get("padWetness")
-        if not padWetness:
-            self._attr_entity_registry_enabled_default = False
-            self.async_write_ha_state()
-            return
 
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
@@ -194,12 +158,6 @@ class MopTankLevel(RoombaSensor):
         self._attr_native_unit_of_measurement = PERCENTAGE
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:cup-water"
-        data = self.coordinator.data or {}
-        padWetness = data.get("padWetness")
-        if not padWetness:
-            self._attr_entity_registry_enabled_default = False
-            self.async_write_ha_state()
-            return
 
     def _handle_coordinator_update(self):
         """Update sensor when coordinator data changes."""
@@ -207,4 +165,3 @@ class MopTankLevel(RoombaSensor):
         tankLvl = data.get("tankLvl")
         self._attr_native_value = tankLvl
         self.async_write_ha_state()
-

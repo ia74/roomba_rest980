@@ -2,13 +2,40 @@
 
 import logging
 
-from .sensors.vacuum import *
-from .sensors.mop import *
+from homeassistant.core import HomeAssistant
+
+from .sensors_mop import MopBehavior, MopCleanMode, MopPad, MopTank, MopTankLevel
+from .sensors_vacuum import (
+    RoombaAttributes,
+    RoombaBatterySensor,
+    RoombaBinSensor,
+    RoombaCarpetBoostMode,
+    RoombaCleanBase,
+    RoombaCleanEdges,
+    RoombaCleanMode,
+    RoombaCloudAttributes,
+    RoombaCloudPmap,
+    RoombaError,
+    RoombaIP,
+    RoombaJobInitiator,
+    RoombaMissionElapsedTime,
+    RoombaMissionExpireTime,
+    RoombaMissionStartTime,
+    RoombaNetworkNoise,
+    RoombaNotReady,
+    RoombaPhase,
+    RoombaRechargeTime,
+    RoombaRSSI,
+    RoombaSNR,
+    RoombaTotalArea,
+    RoombaTotalJobs,
+    RoombaTotalTime,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
+async def async_setup_entry(hass, entry, async_add_entities):
     """Create the sensors needed to poll Roomba's data."""
     coordinator = entry.runtime_data.local_coordinator
     cloudCoordinator = entry.runtime_data.cloud_coordinator
@@ -68,4 +95,3 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                         )
     if cloud_entities:
         async_add_entities(cloud_entities)
-

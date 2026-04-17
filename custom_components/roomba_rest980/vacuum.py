@@ -14,7 +14,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .misc.ExtendedAttributes import createExtendedAttributes
+from .ExtendedAttributes import createExtendedAttributes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ async def async_setup_entry(
 PENDING_UPLOAD = 39
 NOT_AVAILABLE = 0
 
+
 class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     """The Rest980 controlled vacuum."""
 
@@ -65,21 +66,21 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         self._attr_activity = VacuumActivity.IDLE
         if cycle == "none" and not_ready == PENDING_UPLOAD:
             self._attr_activity = VacuumActivity.IDLE
-        
-        if not_ready and not_ready > NOT_AVAILABLE: # Not ready, and code is an error
+
+        if not_ready and not_ready > NOT_AVAILABLE:  # Not ready, and code is an error
             self._attr_activity = VacuumActivity.ERROR
-        
+
         if cycle in {"clean", "quick", "spot", "train"} or phase in {"hwMidMsn"}:
             self._attr_activity = VacuumActivity.CLEANING
-        
+
         if phase in {"stop", "pause"}:
             self._attr_activity = VacuumActivity.PAUSED
-        
+
         if cycle in {"evac", "dock"} or phase in {
             "charge",
         }:  # Emptying Roomba Bin to Dock, Entering Dock
             self._attr_activity = VacuumActivity.DOCKED
-        
+
         if phase in {
             "hmUsrDock",
             "hmPostMsn",
@@ -109,6 +110,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         )
 
     async def call_rest980_action(self, action):
+        """Call a specific action from rest980."""
         await self.hass.services.async_call(
             DOMAIN,
             "rest980_action",
@@ -121,7 +123,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
 
     async def async_clean_spot(self, **kwargs):
         """Spot clean."""
-        #NOTE: I believe this is a cloud method
+        # NOTE: I believe this is a cloud method
 
     async def async_start(self):
         """Start cleaning floors, check if any are selected or just clean everything."""

@@ -11,7 +11,7 @@ from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .misc.CloudApi import AuthenticationError, iRobotCloudApi
+from .CloudApi import AuthenticationError, iRobotCloudApi
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
