@@ -1,6 +1,6 @@
 services:
   roomba_one: # This container name can be anything you want, it only must be unique.
-    container_name: rest980
+    container_name: rest980_one
     image: koalazak/rest980:latest
     ports:
       - "3000:3000" # Note down this port if you decide to change it!
@@ -11,7 +11,7 @@ services:
       - FIRMWARE_VERSION=2
     restart: unless-stopped
   roomba_two: # This container name can be anything you want, it only must be unique.
-    container_name: rest980
+    container_name: rest980_two
     image: koalazak/rest980:latest
     ports:
       # rest980 runs internally on port 3000, so the second half must stay 3000.
