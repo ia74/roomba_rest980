@@ -2,40 +2,41 @@
 
 Integrate your iRobot Roomba and Braava Jets with Home Assistant using rest980, and the cloud (optional).
 
+## Features
+
+| Feature | Local | Cloud |
+|---------|-------|-------|
+| Roomba Vacuum support | ✅ | ✅ |
+| Braava Mop support | ✅ | ✅ |
+| HA Vacuum Entity | ✅ | ✅ |
+| Cloud MQTT | 🔲 | 🔲 |
+| Selective Room Cleaning | ✅ | ✅ |
+| Two Pass | ✅ | ✅ |
+| Grab rooms dynamically | 🔲 | ✅ |
+| Map Image | ⚠️ | ✅ |
+| Favorites | ❌ | ✅ |
+| Start Jobs | ✅ | ✅ |
+| Pause / Resume | ✅ | ✅ |
+| Return Home | ✅ | ✅ |
+| Spot Clean | 🔲 | 🔲 |
+| Mapping Run | 🔲 | 🔲 |
+| Maintenance Parts | 🔲 | 🔲 |
+| Schedules | 🔲 | 🔲 |
+| Entity attribute parity with jeremywillans' YAML config entry | ✅ | ✅ |
+| Real-time map view | ⚠️ | ⚠️ |
+| Real-time robot position | ⚠️ | ⚠️ |
+| Locally grab rooms | 🛠️ | ❌ |
+| [Timeline Report from newer iRobot app](https://github.com/ia74/roomba_rest980/issues/4#issuecomment-3694259760) | ⚠️ | 🛠️ |
+
+🛠️: Planned, WIP  
+❌: Currently not possible  
+⚠️: Planned, requires jailbreak
+
+> I've reverse engineered their MQTT stack and am working on incorporating it into [dorita/rest980.](https://github.com/ia74/dorita980/blob/master/lib/v2/cloud.js)
+
 ## Note about Braava
 
 As I don't own a Braava Jet mop, the support for it is purely maintained [by the community and their help!](https://github.com/ia74/roomba_rest980/issues/12) Thus, I can't bug-test the integration with as much time as I can the vacuum part. If you run into any issues, [make an issue and I'll work on fixing them!](https://github.com/ia74/roomba_rest980/issues/new)
-
-## Features
-
-- [x] Native Vacuum entity
-- [x] Cloud API connection
-  - [x] Cloud HTTP methods
-  - [ ] Cloud MQTT connection
-    - I've reverse engineered their MQTT stack and am working on incorporating it into [dorita/rest980.](https://github.com/ia74/dorita980/blob/master/lib/v2/cloud.js)
-- [x] Selective room cleaning
-  - [x] Two pass feature
-  - [x] (Cloud only) Dynamically grab rooms and add them to the UI
-  - [x] Grab room data
-  - [x] Create map image
-- [x] Favorites
-- [x] Start
-  - [x] Clean all rooms by default
-- [x] Pause
-- [ ] Unpause
-- [x] Stop
-- [x] Return Home
-- [ ] Spot Clean
-- [ ] Mapping Run
-- [ ] Maintenance parts
-- [ ] Schedules
-- [ ] Real-time map view
-  - [Requires jailbreaking robot (public release WIP)](https://community.home-assistant.io/t/roomba-i7-rest980-with-selective-room-cleaning-integrate-your-irobot-roomba-with-home-assistant/921713/15?u=ia74)
-  - [ ] Real-time room position entity
-  - [ ] Real-time robot position entity
-- [ ] Locally grab rooms and add them to the UI
-- [ ] [(Maybe) Timeline Report from newer iRobot app](https://github.com/ia74/roomba_rest980/issues/4#issuecomment-3694259760)
-- [x] Entity attribute parity with jeremywillans' YAML config entry
 
 ## Why?
 
