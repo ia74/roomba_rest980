@@ -21,6 +21,21 @@ Luckily for us, the Roomba is based on BusyBox, so it has `busybox.suid`, and it
 
 We use the ACE vulnerability to gain root access and download the `runjailed` script, which performs the rest of the jailbreak with the included scripts.
 
+## Features
+
+| Feature | Status |
+|---------|--------|
+| Root ACE | ✅ |
+| SSH, FTP | ✅ |
+| Exfiltrate PMap data | ✅ |
+| Expose new internal MQTT messages to the public | 🛠️ |
+| Expose Timeline Report to the public | 🛠️ |
+| Communication with mobility/auxiliary boards | 🛠️ |
+| Downgrading | ⚠️ |
+
+🛠️: WIP  
+⚠️: WIP, risky  
+
 ## Scripts
 
 > `runjailed` and these scripts assume you already have obtained root access. Note that you can perform most of the scripts anyways using the BusyBox SUID script, but it's better to have root anyway.
