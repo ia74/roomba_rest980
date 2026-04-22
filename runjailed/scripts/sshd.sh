@@ -11,4 +11,4 @@ if [ ! -f "$FILE" ]; then
 fi
 
 mount --bind $SCRIPTS_DIR/sshd.socket /lib/systemd/system/sshd.socket
-systemctl start sshd.socket
+systemctl enable --now sshd.socket

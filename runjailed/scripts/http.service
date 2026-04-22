@@ -1,0 +1,16 @@
+[Unit]
+Conflicts=http.service
+
+[Unit]
+Description=Runjailed's HTTP Server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python /opt/irobot/persistent/opt/runjailed/scripts/jailbreak.py
+WorkingDirectory=/opt/irobot/persistent/opt/runjailed/scripts
+Restart=always
+StandardOutput=inherit
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

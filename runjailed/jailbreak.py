@@ -1,5 +1,31 @@
-# SOON...
+import socket
 
-# >>> import sys
-# >>> print(sys.modules.keys())
-# ['copy_reg', 'sre_compile', '_sre', 'encodings', 'site', '__builtin__', 'sysconfig', '__main__', 'encodings.encodings', 'abc', 'posixpath', '_weakrefset', 'errno', 'encodings.codecs', 'sre_constants', 're', '_abcoll', 'types', '_codecs', 'encodings.__builtin__', '_warnings', 'genericpath', 'stat', 'zipimport', '_sysconfigdata', 'warnings', 'UserDict', 'encodings.ascii', 'encodings.utf_8', 'sys', 'codecs', 'readline', 'os.path', '_locale', 'sitecustomize', 'rlcompleter', 'signal', 'traceback', 'linecache', 'posix', 'encodings.aliases', 'exceptions', 'sre_parse', 'os', '_weakref']
+HOST, PORT = '', 8080
+
+listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+listen_socket.bind((HOST, PORT))
+listen_socket.listen(1)
+
+print 'Serving HTTP on port %s ...' % PORT
+
+while True:
+    client_connection, client_address = listen_socket.accept()
+    
+    request = client_connection.recv(1024)
+    
+    http_response = """\
+HTTP/1.1 200 OK
+Content-Type: text/html
+
+<html>
+<body>
+<h1>Hello, World!</h1>
+<p>This is a Python 2.7 socket-only server.</p>
+</body>
+</html>
+"""
+    
+    client_connection.sendall(http_response)
+    client_connection.close()
