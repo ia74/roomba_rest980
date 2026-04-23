@@ -1,13 +1,10 @@
-# SOON...
 from http.server import HTTPServer, BaseHTTPRequestHandler
+
 import threading
-
-httpd:HTTPServer|None = None
-
 import paho.mqtt.client as mqtt
 import ssl
 import json
-
+import argparse
 import socket
 
 def get_local_ip():
@@ -21,7 +18,7 @@ def get_local_ip():
         s.close()
     return IP
 
-import argparse
+httpd : HTTPServer|None = None
 
 parser = argparse.ArgumentParser("runjailed")
 parser.add_argument("--ip", "-i", dest="ip", help="Your robot's IP", required=True, type=str)
@@ -42,27 +39,16 @@ def sendCmd(cmd: str):
     # TODO: Implement
     pass
 
-def sendToScript(cmd: str, file: str):
-    cmd = cmd.replace('"', '\\"')
-    if len(cmd) > AVAILABLE_CMD_SPACE and cmd != '\\"': return False
-    if len(file) > 1: return False
-    sendCmd('printf "' + cmd + '">>/tmp/' + file)
-
-def ensureCleared(file: str):
-    if len(file) > 12: return False
-    sendCmd('rm /tmp/' + file)
-
-def intoChunks(cmd: str, size: int):
-    return [cmd[i:i+size] for i in range(0, len(cmd), size)]
-
 def sendChunkedCommand(cmd: str, file: str|None = "I", display=str|None):
-    ensureCleared(file)
-    chunks = intoChunks(cmd, AVAILABLE_CMD_SPACE)
-    maxSize = str(len(chunks))
-    for i, chunk in enumerate(chunks):
-        sendToScript(chunk, file)
-        chunkSent = "- Wrote chunk "+str(i)+"/"+maxSize
-        print(chunkSent+("\b"*len(chunkSent)), end='', flush=True) 
+    if len(file) > 1: return False
+    sendCmd('rm /tmp/' + file)
+    
+    chunks = [cmd[i:i+AVAILABLE_CMD_SPACE] for i in range(0, len(cmd), AVAILABLE_CMD_SPACE)]
+
+    for cmd in chunks:
+        cmd = cmd.replace('"', '\\"')
+        sendCmd('printf "' + cmd + '">>/tmp/' + file)
+
     sendCmd("chmod a+x /tmp/"+ file)
     sendCmd("bash -c /tmp/" + file)
     print(f"$$$: {display or cmd}")
@@ -79,14 +65,16 @@ def on_message(client, userdata, msg):
     if "shadow/update" in msg.topic:
         robotDat = pl['state']['reported']
         print("Discovered: " + robotDat['sku'] +" on " + robotDat['softwareVer'])
+        
         runAsRoot(f"curl http://{LOCAL_IP}:8883/whoami/$(whoami)", "E")
-        runAsRoot(f"mkdir -p {RUNJAILED_HOME}/scripts && wget https://raw.githubusercontent.com/ia74/roomba_rest980/refs/heads/main/runjailed/scripts/DOWNLOAD_ALL.sh -O {RUNJAILED_HOME}/scripts/DOWNLOAD_ALL.sh && chmod a+x {RUNJAILED_HOME}/scripts/DOWNLOAD_ALL.sh && bash -c \"{RUNJAILED_HOME}/scripts/DOWNLOAD_ALL.sh {LOCAL_IP}\"", "A")
+        runAsRoot(f"mkdir -p {RUNJAILED_HOME}/scripts && wget https://raw.githubusercontent.com/ia74/roomba_rest980/refs/heads/main/runjailed/scripts/update.sh -O {RUNJAILED_HOME}/scripts/update.sh && chmod a+x {RUNJAILED_HOME}/scripts/update.sh && bash -c \"{RUNJAILED_HOME}/scripts/update.sh {LOCAL_IP}\"", "A")
+        
         print("\nWorking... Don't close this! Commands are being sent over and executed.")
         print("This is a demonstration, soon this will become functional.")
 
-class MyHandler(BaseHTTPRequestHandler):
-    def log_message(self, format, *args):
-        pass
+class RunjailedHTTPHandler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args): pass
+
     def do_GET(self):
         self.send_response(200)
         
@@ -99,13 +87,15 @@ class MyHandler(BaseHTTPRequestHandler):
           print("[SUCCESS] Unlocked!")
         if "done/ssh" in self.path:
           print("[SUCCESS] Enabled SSH!")
+        if "done/http" in self.path:
+          print("[SUCCESS] Enabled HTTP!")
         if "whoami/" in self.path:
           usr = self.path.split("whoami/")[1]
           pref = "[SUCCESS]" if "root" in usr else "[FAIL?]"
           print(pref+" Obtained " + usr +" access.")
 
 server_address = ('', 8883)
-httpd = HTTPServer(server_address, MyHandler)
+httpd = HTTPServer(server_address, RunjailedHTTPHandler)
       
 t = threading.Thread(target=httpd.serve_forever, daemon=True)
 t.start()
