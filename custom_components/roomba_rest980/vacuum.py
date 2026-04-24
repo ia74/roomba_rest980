@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from typing import Any
 
 from homeassistant.components.vacuum import (
     StateVacuumEntity,
@@ -12,16 +13,24 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.components.vacuum import Segment
 
 from .const import DOMAIN
 from .LegacyCompatibility import createExtendedAttributes
 
 _LOGGER = logging.getLogger(__name__)
 
+# HA 2026.3+ area cleaning support (Segment dataclass + CLEAN_AREA feature flag)
+try:
+    from homeassistant.components.vacuum import Segment
+
+    _HAS_CLEAN_AREA = hasattr(VacuumEntityFeature, "CLEAN_AREA")
+except ImportError:
+    _HAS_CLEAN_AREA = False
+
 SUPPORT_ROBOT = (
     VacuumEntityFeature.START
     | VacuumEntityFeature.RETURN_HOME
-    | VacuumEntityFeature.CLEAN_SPOT
     | VacuumEntityFeature.MAP
     | VacuumEntityFeature.SEND_COMMAND
     | VacuumEntityFeature.STATE
@@ -29,14 +38,21 @@ SUPPORT_ROBOT = (
     | VacuumEntityFeature.PAUSE
 )
 
+if _HAS_CLEAN_AREA:
+    SUPPORT_ROBOT = SUPPORT_ROBOT | VacuumEntityFeature.CLEAN_AREA
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities
 ):
     """Create the vacuum."""
+    vacuum = RoombaVacuum(hass, entry.runtime_data.local_coordinator, entry)
     async_add_entities(
-        [RoombaVacuum(hass, entry.runtime_data.local_coordinator, entry)]
+        [vacuum]
     )
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN].setdefault(entry.entry_id, {})
+    hass.data[DOMAIN][entry.entry_id]["vacuum"] = vacuum
 
 
 PENDING_UPLOAD = 39
@@ -48,16 +64,19 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     def __init__(self, hass: HomeAssistant, coordinator, entry: ConfigEntry) -> None:
         """Setup the robot."""
         super().__init__(coordinator)
+
         self.hass = hass
         self._entry: ConfigEntry = entry
         self._attr_supported_features = SUPPORT_ROBOT
         self._attr_unique_id = f"{entry.unique_id}_vacuum"
         self._attr_name = entry.title
+        self._segment_map: dict[str, dict[str, Any]] = {}
 
     def _handle_coordinator_update(self):
         """Update all attributes."""
         data = self.coordinator.data or {}
         status = data.get("cleanMissionStatus", {})
+        bin_data = data.get("bin") or {}
         cycle = status.get("cycle")
         phase = status.get("phase")
         not_ready = status.get("notReady")
@@ -86,8 +105,19 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         }:  # Sent Home, Mid Dock, Final Dock
             self._attr_activity = VacuumActivity.RETURNING
 
+
         self._attr_available = data != {}
-        self._attr_extra_state_attributes = createExtendedAttributes(self)
+        self._attr_battery_level = data.get("batPct")
+
+        extra_attributes = createExtendedAttributes(self)
+        extra_attributes.update(
+            {
+                "battery_level": self._attr_battery_level,
+                "bin_full": bin_data.get("full"),
+                "bin_present": bin_data.get("present"),
+            }
+        )
+        self._attr_extra_state_attributes = extra_attributes
         self._async_write_ha_state()
 
     @property
@@ -138,37 +168,28 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             # Get selected rooms from switches (if available)
             payload = []
             regions = []
+            params = self._build_clean_params()
 
             # Check if we have room selection switches available
-            domain_data = self._entry.runtime_data.switched_rooms
-            selected_rooms = []
-
-            # Find all room switches that are turned on
-            for key, entity in domain_data.items():
-                if (
-                    key.startswith("select.")
-                    and hasattr(entity, "current_option")
-                    and entity.current_option != "Don't Clean"
-                ):
-                    selected_rooms.append(entity)
-
-            # If we have specific rooms selected, use targeted cleaning
-            if selected_rooms:
-                # Build regions list from selected rooms
-                regions = [
-                    room.get_region_json()
-                    for room in selected_rooms
-                    if hasattr(room, "get_region_json")
-                ]
-
+            selected_rooms = list(self._entry.runtime_data.rooms_to_clean.values())
+            _LOGGER.warning(selected_rooms)
             # If we have specific regions selected, use targeted cleaning
-            if regions:
+            if selected_rooms:
+                for room_id in selected_rooms:
+                    regions.append({
+                        "params":params,
+                        "type": "rid",
+                        "region_id": room_id,
+                    })
+                    
                 payload = {
                     "ordered": 1,
-                    "pmap_id": selected_rooms[0].pmap_id,
+                    "pmap_id": self._attr_extra_state_attributes.get("pmap0_id", ""),
                     "regions": regions,
                 }
-
+                self._entry.runtime_data.rooms_to_clean.clear()
+                _LOGGER.warning(payload)
+                
                 await self.hass.services.async_call(
                     DOMAIN,
                     "rest980_clean",
@@ -185,7 +206,8 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
                     DOMAIN,
                     "rest980_clean",
                     service_data={
-                        "payload": {"action": "start"},
+                        #"payload": {"action": "start"},
+                        "payload":{"params": params},
                         "base_url": self._entry.data["base_url"],
                     },
                     blocking=True,
@@ -207,36 +229,147 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         await asyncio.sleep(2)
         await self.call_rest980_action("dock")
 
-    async def async_send_command(
-        self,
-        command: str,
-        params: dict[str, any] | list[any] | None = None,
-        **kwargs: any,
+    # --- HA 2026.3 vacuum area cleaning support ---
+
+    def _get_cloud_robot_data(self) -> dict[str, Any] | None:
+        """Return cloud data for this robot, or None if unavailable."""
+        runtime_data = self._entry.runtime_data
+        if (
+            not runtime_data.cloud_coordinator
+            or not runtime_data.cloud_coordinator.data
+            or not runtime_data.robot_blid
+        ):
+            return None
+        return runtime_data.cloud_coordinator.data.get(runtime_data.robot_blid)
+
+    def _build_clean_params(self) -> dict[str, Any]:
+        """Build Roomba cleaning parameters from current mode selections."""
+        runtime_data = self._entry.runtime_data
+
+        if runtime_data.vacuum_mode == "vacuum":
+            operating_mode = 2
+        else:
+            operating_mode = 6
+
+        if runtime_data.mop_mode == "low":
+            wet_mode = 1
+        elif runtime_data.mop_mode == "medium":
+            wet_mode = 2
+        else:
+            wet_mode = 3
+
+        return {
+            "noAutoPasses": True,
+            "operatingMode": operating_mode,
+            "padWetness": {
+                "disposable": wet_mode,
+                "reusable": wet_mode,
+            },
+            "twoPass": False,
+            "swScrub": 0,
+        }
+
+    async def async_get_segments(self) -> list:
+        """Return the cleanable segments reported by the vacuum.
+
+        Each Roomba region and zone from the active persistent map is
+        returned as a Segment with a composite ID that encodes the
+        region_id, type (rid/zid), and pmap_id so that
+        async_clean_segments can reconstruct the Roomba REST payload.
+        """
+        if not _HAS_CLEAN_AREA:
+            return []
+
+        segments: list[Segment] = []
+        self._segment_map.clear()
+
+        robot_data = self._get_cloud_robot_data()
+        if not robot_data or "pmaps" not in robot_data:
+            return segments
+
+        for pmap in robot_data["pmaps"]:
+            try:
+                details = pmap["active_pmapv_details"]
+                pmap_id = details["active_pmapv"]["pmap_id"]
+                map_name = details["map_header"]["name"]
+
+                for region in details.get("regions", []):
+                    seg_id = f"{region['id']}:rid:{pmap_id}"
+                    name = region.get("name") or "Unnamed Room"
+                    segments.append(
+                        Segment(id=seg_id, name=name, group=map_name)
+                    )
+                    self._segment_map[seg_id] = {
+                        "type": "rid",
+                        "region_id": region["id"],
+                        "pmap_id": pmap_id,
+                    }
+
+                for zone in details.get("zones", []):
+                    seg_id = f"{zone['id']}:zid:{pmap_id}"
+                    name = zone.get("name") or "Unnamed Zone"
+                    segments.append(
+                        Segment(id=seg_id, name=name, group=map_name)
+                    )
+                    self._segment_map[seg_id] = {
+                        "type": "zid",
+                        "region_id": zone["id"],
+                        "pmap_id": pmap_id,
+                    }
+            except (KeyError, TypeError) as err:
+                _LOGGER.warning("Failed to parse pmap segments: %s", err)
+
+        _LOGGER.debug("Discovered %d vacuum segments", len(segments))
+        return segments
+
+    async def async_clean_segments(
+        self, segment_ids: list[str], **kwargs: Any
     ) -> None:
-        """Send a command to a vacuum cleaner."""
+        """Clean the specified segments.
 
-        if command == "start":
-            regions = [
-                {
-                    "type": "rid",
-                    "region_id": region.get("region_id"),
-                    "params": {
-                        "noAutoPasses": False,
-                        "twoPass": region.get("params", {}).get("twoPass"),
-                    },
+        Segment IDs are composite strings produced by async_get_segments
+        in the format ``region_id:type:pmap_id``.  They are grouped by
+        pmap_id and sent to the Roomba REST980 cleanRoom endpoint.
+        """
+        if not segment_ids:
+            return
+
+        # Ensure the segment map is populated
+        if not self._segment_map:
+            await self.async_get_segments()
+
+        params = self._build_clean_params()
+
+        regions_by_pmap: dict[str, list[dict[str, Any]]] = {}
+        for seg_id in segment_ids:
+            seg_data = self._segment_map.get(seg_id)
+            if not seg_data:
+                parts = seg_id.split(":")
+                if len(parts) != 3:
+                    _LOGGER.warning("Unknown segment ID: %s", seg_id)
+                    continue
+                seg_data = {
+                    "region_id": parts[0],
+                    "type": parts[1],
+                    "pmap_id": parts[2],
                 }
-                for region in params.get("regions", [])
-            ]
 
-            if regions:
-                payload = {
-                    "ordered": 1,
-                    "pmap_id": self._attr_extra_state_attributes.get("pmap0_id", ""),
-                    "regions": regions,
-                }
-            else:
-                payload = {"action": "start"}
+            region = {
+                "type": seg_data["type"],
+                "region_id": seg_data["region_id"],
+                "params": params,
+            }
+            regions_by_pmap.setdefault(seg_data["pmap_id"], []).append(region)
 
+        for pmap_id, regions in regions_by_pmap.items():
+            payload = {
+                "ordered": 1,
+                "pmap_id": pmap_id,
+                "regions": regions,
+            }
+            _LOGGER.info(
+                "Starting area clean: pmap=%s, regions=%s", pmap_id, regions
+            )
             await self.hass.services.async_call(
                 DOMAIN,
                 "rest980_clean",
@@ -246,5 +379,3 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
                 },
                 blocking=True,
             )
-        else:
-            raise NotImplementedError(f"Command not implemented: {command}")
