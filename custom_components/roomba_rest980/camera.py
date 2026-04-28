@@ -162,14 +162,14 @@ class RoombaMapCamera(Camera):
     def device_info(self) -> DeviceInfo:
         """Return the Roomba's device information."""
         data = self._coordinator.data or {}
-        rdata = data[self._entry.runtime_data.robot_blid]["robot_info"]
+        rdata = data.get(self._entry.runtime_data.robot_blid, {}).get("robot_info", {})
         return DeviceInfo(
             identifiers={(DOMAIN, self._entry.unique_id)},
-            name=rdata["name"],
+            name=rdata.get("name", "Roomba"),
             manufacturer="iRobot",
             model="Roomba",
-            model_id=rdata["sku"],
-            sw_version=rdata["softwareVer"],
+            model_id=rdata.get("sku"),
+            sw_version=rdata.get("softwareVer"),
         )
 
     async def async_camera_image(
