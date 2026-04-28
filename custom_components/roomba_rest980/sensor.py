@@ -555,7 +555,7 @@ class RoombaJobInitiator(RoombaSensor):
         data = self.coordinator.data or {}
         status = data.get("cleanMissionStatus", {})
         initiator = status.get("initiator") or "none"
-        self._attr_native_value = jobInitiatorMappings.get(initiator, "Unknown")
+        self._attr_native_value = jobInitiatorMappings.get(initiator)
         self.async_write_ha_state()
 
 
