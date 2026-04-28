@@ -87,13 +87,10 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             self._attr_activity = VacuumActivity.RETURNING
 
         self._attr_available = data != {}
+        self._attr_battery_level = data.get("batPct")
         self._attr_extra_state_attributes = createExtendedAttributes(self)
         self._async_write_ha_state()
 
-    @property
-    def battery_level(self) -> int | None:
-        """Return the vacuum battery level as expected by HA vacuum cards."""
-        return self.coordinator.data.get("batPct") if self.coordinator.data else None
 
     @property
     def device_info(self) -> DeviceInfo:
