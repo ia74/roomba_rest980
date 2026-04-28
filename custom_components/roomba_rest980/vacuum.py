@@ -45,10 +45,6 @@ NOT_AVAILABLE = 0
 class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     """The Rest980 controlled vacuum."""
 
-    @property
-    def battery_level(self):
-        """Return None to allow _attr_battery_level to work correctly."""
-        return None
 
 
     def __init__(self, hass: HomeAssistant, coordinator, entry: ConfigEntry) -> None:
@@ -93,7 +89,6 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
             self._attr_activity = VacuumActivity.RETURNING
 
         self._attr_available = data != {}
-        self._attr_battery_level = data.get("batPct")
         self._attr_extra_state_attributes = createExtendedAttributes(self)
         self._async_write_ha_state()
 
