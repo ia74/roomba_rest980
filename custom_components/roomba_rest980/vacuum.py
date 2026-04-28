@@ -45,6 +45,11 @@ NOT_AVAILABLE = 0
 class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     """The Rest980 controlled vacuum."""
 
+    @property
+    def battery_level(self):
+        """Return None - overriding deprecated parent property."""
+        return None
+
     def __init__(self, hass: HomeAssistant, coordinator, entry: ConfigEntry) -> None:
         """Setup the robot."""
         super().__init__(coordinator)
