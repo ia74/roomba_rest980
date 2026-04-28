@@ -166,7 +166,7 @@ rest980 will gather all the data about our robot, but the integration will forma
 
 When you install the integration and restart Home Assistant, you may notice it picking up your Roomba.
 
-![Discovery](img/discovery.png)
+![Discovery](.github/img/discovery.png)
 
 This is not due to your rest980 API server being discovered, rather the integration finding your Roomba on the local network.
 
@@ -180,7 +180,7 @@ If not, simply press "Add Integration" and search for "iRobot Roomba (rest980)".
 
 You'll be presented with this popup. 
 
-![Adding the robot](img/ADD.png)
+![Adding the robot](.github/img/setup_integration.png)
 
 Input your rest980 server's url like so:
 
@@ -194,11 +194,11 @@ You may also input your iRobot credentials now, if you want to use cloud feature
 
 If you did it right, you'll see a success screen that has also gotten your given name for the Roomba!
 
-![Added the config!](img/ADDeD.png)
+![Added the config!](.github/img/config_created.png)
 
 If all has gone right, checking the device will show something like this:
 
-![Added the config!](img/fin.png)
+![Added the config!](.github/img/device_entry.png)
 
 ## Step 3.5: Cloud issues.. (Cloud)
 
@@ -208,12 +208,12 @@ iRobot does some unknown things with their cloud API. As of current, my implemen
 
 Your rooms and favorites will be auto-imported, alongside a clean map view, similar to the one from the app.  
 
-![Map view](img/map_view.png)
+![Map view](.github/img/map_view.png)
 
 This allows you to selectively clean rooms, and control it by automation (tutorial later).  
 Rooms you select will be cleaned in the order you select, with how many passes you define.
 
-![Added the config!](img/rooms.png)
+![Added the config!](.github/img/rooms.png)
 
 To clean a room, simply click its option and make it either:
 
@@ -223,10 +223,10 @@ To clean a room, simply click its option and make it either:
 
 Then press the Clean button from the vacuum's entity!
 
-![Two pass](img/two_pass.png)
+![Two pass](.github/img/two_pass.png)
 
 
-![Room selection](img/clean.png)
+![Room selection](.github/img/clean.png)
 
 ## Step 4: Rooms! (rest980 ONLY)
 
@@ -247,7 +247,7 @@ The integration adds all the attributes that you would expect from [jeremywillan
 
 You may see the code for this in [LegacyCompatibility.py](custom_components/roomba_rest980/LegacyCompatibility.py)
 
-![Compatibility](img/compat.png)
+![Compatibility](.github/img/compat.png)
 
 One minor issue is that the Vacuum entity only supports these states:
 ```

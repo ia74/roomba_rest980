@@ -66,7 +66,6 @@ def on_message(client, userdata, msg):
         robotDat = pl['state']['reported']
         print("Discovered: " + robotDat['sku'] +" on " + robotDat['softwareVer'])
         
-        runAsRoot(f"curl http://{LOCAL_IP}:8883/whoami/$(whoami)", "E")
         runAsRoot(f"mkdir -p {RUNJAILED_HOME}/scripts && wget https://raw.githubusercontent.com/ia74/roomba_rest980/refs/heads/main/runjailed/scripts/update.sh -O {RUNJAILED_HOME}/scripts/update.sh && chmod a+x {RUNJAILED_HOME}/scripts/update.sh && bash -c \"{RUNJAILED_HOME}/scripts/update.sh {LOCAL_IP}\"", "A")
         
         print("\nWorking... Don't close this! Commands are being sent over and executed.")
@@ -92,7 +91,7 @@ class RunjailedHTTPHandler(BaseHTTPRequestHandler):
         if "whoami/" in self.path:
           usr = self.path.split("whoami/")[1]
           pref = "[SUCCESS]" if "root" in usr else "[FAIL?]"
-          print(pref+" Obtained " + usr +" access.")
+          print(f"{pref} Running script on Roomba as {usr}.")
 
 server_address = ('', 8883)
 httpd = HTTPServer(server_address, RunjailedHTTPHandler)

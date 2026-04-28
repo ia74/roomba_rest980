@@ -13,6 +13,8 @@ cd $SCRIPTS_DIR
 
 rm *
 
+curl "http://$LOCAL_IP:8883/whoami/$(whoami)"
+
 LIST="$PREFIX/common.sh $PREFIX/enableDevMode.sh $PREFIX/ftp.sh $PREFIX/sshd.sh $PREFIX/sshd.socket $ROOT_PREF/jailbreak.py $PREFIX/http.service"
 
 for item in "${LIST[@]}"; do
@@ -21,7 +23,7 @@ for item in "${LIST[@]}"; do
     chmod a+x $SCRIPTS_DIR/*
 done
 
-curl http://$LOCAL_IP:8883/done/downloading
+curl "http://$LOCAL_IP:8883/done/downloading"
 
 ### Unlocker: Unlock the firewall.
 
