@@ -2,7 +2,7 @@
   "domain": "roomba_rest980",
   "name": "Roomba (Rest980)",
   "codeowners": [
-    "@ia74"
+    "@ia74","@MonsterArtur1"
   ],
   "config_flow": true,
   "dependencies": [],

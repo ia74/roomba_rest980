@@ -11,7 +11,6 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
 from .coordinator import RoombaCloudCoordinator, RoombaDataCoordinator
-from .select import CleanRoomPasses
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -26,12 +25,16 @@ class RoombaRuntimeData:
     cloud_enabled: bool = False
     cloud_coordinator: RoombaCloudCoordinator = None
 
-    switched_rooms: dict[str, CleanRoomPasses] = {}
+    rooms_to_clean: dict[str, str] = {}
+    vacuum_mode: str = None
+    mop_mode: str = None
 
     def __init__(
         self,
         local_coordinator: RoombaDataCoordinator,
         robot_blid: str,
+        vacuum_mode: str,
+        mop_mode: str,
         cloud_enabled: bool,
         cloud_coordinator: RoombaCloudCoordinator,
     ) -> None:
@@ -40,6 +43,8 @@ class RoombaRuntimeData:
         self.robot_blid = robot_blid
         self.cloud_enabled = cloud_enabled
         self.cloud_coordinator = cloud_coordinator
+        self.vacuum_mode = vacuum_mode
+        self.mop_mode = mop_mode
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -54,6 +59,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         robot_blid=None,
         cloud_enabled=entry.data["cloud_api"],
         cloud_coordinator=cloud_coordinator,
+        vacuum_mode="vacuum",
+        mop_mode="medium",
     )
 
     # Set up cloud coordinator if enabled
@@ -190,7 +197,7 @@ async def _async_match_blid(
 ) -> None:
     """Match local Roomba with cloud robot by comparing device info."""
     try:
-        _LOGGER.debug("Attributes received: %s", cloud_coordinator.data.items())
+        #_LOGGER.debug("Attributes received: %s", cloud_coordinator.data.items())
         for blid, robo in cloud_coordinator.data.items():
             if not isinstance(robo, dict):
                 continue
