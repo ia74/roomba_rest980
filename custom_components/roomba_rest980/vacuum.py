@@ -100,7 +100,11 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         await self.coordinator.async_request_refresh()
 
     async def async_start(self) -> None:
-        await self._action("start")
+        from homeassistant.components.vacuum import VacuumActivity
+        if self._attr_activity == VacuumActivity.PAUSED:
+            await self._action("resume")
+        else:
+            await self._action("start")
 
     async def async_stop(self) -> None:
         await self._action("stop")
