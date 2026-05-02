@@ -92,4 +92,32 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         self._attr_extra_state_attributes = createExtendedAttributes(self)
         self._async_write_ha_state()
 
+    async def _action(self, endpoint: str) -> None:
+        async with self.coordinator.session.get(
+            f"{self.coordinator.url}/api/local/action/{endpoint}"
+        ) as resp:
+            resp.raise_for_status()
+        await self.coordinator.async_request_refresh()
 
+    async def async_start(self) -> None:
+        await self._action("start")
+
+    async def async_stop(self) -> None:
+        await self._action("stop")
+
+    async def async_pause(self) -> None:
+        await self._action("pause")
+
+    async def async_return_to_base(self, **kwargs) -> None:
+        await self._action("dock")
+
+    async def async_clean_spot(self, **kwargs) -> None:
+        await self._action("start")
+
+    async def async_send_command(self, command: str, params=None, **kwargs) -> None:
+        _COMMAND_MAP = {"start": "start", "stop": "stop", "pause": "pause", "dock": "dock", "resume": "resume"}
+        endpoint = _COMMAND_MAP.get(command)
+        if endpoint:
+            await self._action(endpoint)
+        else:
+            _LOGGER.warning("Unknown send_command: %s", command)
