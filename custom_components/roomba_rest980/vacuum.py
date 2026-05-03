@@ -45,6 +45,8 @@ NOT_AVAILABLE = 0
 class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
     """The Rest980 controlled vacuum."""
 
+
+
     def __init__(self, hass: HomeAssistant, coordinator, entry: ConfigEntry) -> None:
         """Setup the robot."""
         super().__init__(coordinator)
@@ -90,161 +92,36 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         self._attr_extra_state_attributes = createExtendedAttributes(self)
         self._async_write_ha_state()
 
-    @property
-    def battery_level(self) -> int | None:
-        """Return the vacuum battery level as expected by HA vacuum cards."""
-        return self.coordinator.data.get("batPct") if self.coordinator.data else None
+    async def _action(self, endpoint: str) -> None:
+        async with self.coordinator.session.get(
+            f"{self.coordinator.url}/api/local/action/{endpoint}"
+        ) as resp:
+            resp.raise_for_status()
+        await self.coordinator.async_request_refresh()
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the Roomba's device information."""
-        data = self.coordinator.data or {}
-        return DeviceInfo(
-            identifiers={(DOMAIN, self._entry.unique_id)},
-            name=data.get("name", "Roomba"),
-            manufacturer="iRobot",
-            model="Roomba",
-            model_id=data.get("sku"),
-            sw_version=data.get("softwareVer"),
-        )
-
-    async def call_rest980_action(self, action):
-        await self.hass.services.async_call(
-            DOMAIN,
-            "rest980_action",
-            service_data={
-                "action": action,
-                "base_url": self._entry.data["base_url"],
-            },
-            blocking=True,
-        )
-
-    async def async_clean_spot(self, **kwargs):
-        """Spot clean."""
-        #NOTE: I believe this is a cloud method
-
-    async def async_start(self):
-        """Start cleaning floors, check if any are selected or just clean everything."""
-        data = self.coordinator.data or {}
-        status = data.get("cleanMissionStatus", {})
-        phase = status.get("phase")
-        cycle = status.get("cycle")
-
-        if phase in {"stop", "pause"} or (cycle == "none" and phase == "resume"):
-            self.call_rest980_action("resume")
-            return
-
-        try:
-            # Get selected rooms from switches (if available)
-            payload = []
-            regions = []
-
-            # Check if we have room selection switches available
-            domain_data = self._entry.runtime_data.switched_rooms
-            selected_rooms = []
-
-            # Find all room switches that are turned on
-            for key, entity in domain_data.items():
-                if (
-                    key.startswith("select.")
-                    and hasattr(entity, "current_option")
-                    and entity.current_option != "Don't Clean"
-                ):
-                    selected_rooms.append(entity)
-
-            # If we have specific rooms selected, use targeted cleaning
-            if selected_rooms:
-                # Build regions list from selected rooms
-                regions = [
-                    room.get_region_json()
-                    for room in selected_rooms
-                    if hasattr(room, "get_region_json")
-                ]
-
-            # If we have specific regions selected, use targeted cleaning
-            if regions:
-                payload = {
-                    "ordered": 1,
-                    "pmap_id": selected_rooms[0].pmap_id,
-                    "regions": regions,
-                }
-
-                await self.hass.services.async_call(
-                    DOMAIN,
-                    "rest980_clean",
-                    service_data={
-                        "payload": payload,
-                        "base_url": self._entry.data["base_url"],
-                    },
-                    blocking=True,
-                )
-            else:
-                # No specific rooms selected, start general clean
-                _LOGGER.info("Starting general cleaning (no specific rooms selected)")
-                await self.hass.services.async_call(
-                    DOMAIN,
-                    "rest980_clean",
-                    service_data={
-                        "payload": {"action": "start"},
-                        "base_url": self._entry.data["base_url"],
-                    },
-                    blocking=True,
-                )
-        except (KeyError, AttributeError, ValueError, Exception) as e:
-            _LOGGER.error("Failed to start cleaning due to configuration error: %s", e)
+    async def async_start(self) -> None:
+        from homeassistant.components.vacuum import VacuumActivity
+        if self._attr_activity == VacuumActivity.PAUSED:
+            await self._action("resume")
+        else:
+            await self._action("start")
 
     async def async_stop(self) -> None:
-        """Stop the action."""
-        await self.call_rest980_action("stop")
+        await self._action("stop")
 
-    async def async_pause(self):
-        """Pause the current action."""
-        await self.call_rest980_action("pause")
+    async def async_pause(self) -> None:
+        await self._action("pause")
 
-    async def async_return_to_base(self):
-        """Calls the Roomba back to its dock."""
-        await self.call_rest980_action("pause")
-        await asyncio.sleep(2)
-        await self.call_rest980_action("dock")
+    async def async_return_to_base(self, **kwargs) -> None:
+        await self._action("dock")
 
-    async def async_send_command(
-        self,
-        command: str,
-        params: dict[str, any] | list[any] | None = None,
-        **kwargs: any,
-    ) -> None:
-        """Send a command to a vacuum cleaner."""
+    async def async_clean_spot(self, **kwargs) -> None:
+        await self._action("start")
 
-        if command == "start":
-            regions = [
-                {
-                    "type": "rid",
-                    "region_id": region.get("region_id"),
-                    "params": {
-                        "noAutoPasses": False,
-                        "twoPass": region.get("params", {}).get("twoPass"),
-                    },
-                }
-                for region in params.get("regions", [])
-            ]
-
-            if regions:
-                payload = {
-                    "ordered": 1,
-                    "pmap_id": self._attr_extra_state_attributes.get("pmap0_id", ""),
-                    "regions": regions,
-                }
-            else:
-                payload = {"action": "start"}
-
-            await self.hass.services.async_call(
-                DOMAIN,
-                "rest980_clean",
-                service_data={
-                    "payload": payload,
-                    "base_url": self._entry.data["base_url"],
-                },
-                blocking=True,
-            )
+    async def async_send_command(self, command: str, params=None, **kwargs) -> None:
+        _COMMAND_MAP = {"start": "start", "stop": "stop", "pause": "pause", "dock": "dock", "resume": "resume"}
+        endpoint = _COMMAND_MAP.get(command)
+        if endpoint:
+            await self._action(endpoint)
         else:
-            raise NotImplementedError(f"Command not implemented: {command}")
+            _LOGGER.warning("Unknown send_command: %s", command)

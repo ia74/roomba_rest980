@@ -57,10 +57,10 @@ class RoombaSensor(CoordinatorEntity, SensorEntity):
 
     def returnIn(self, mapping: dict[str, str], index: str) -> str:
         """Default or map value."""
-        mapping.get(index, index)
+        return mapping.get(index, index)
 
     def _get_default(self, key: str, default: str):
-        return self.coordinator.data.get(key, default)
+        return (self.coordinator.data or {}).get(key, default)
 
 
 class RoombaCloudSensor(CoordinatorEntity, SensorEntity):
