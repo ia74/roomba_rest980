@@ -60,7 +60,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if entry.data["cloud_api"]:
         cloud_coordinator = RoombaCloudCoordinator(hass, entry)
         try:
-            await cloud_coordinator.async_config_entry_first_refresh()
 
             # Start background task for cloud setup and BLID matching
             hass.async_create_task(
@@ -159,6 +158,9 @@ async def _async_setup_cloud(
 ) -> None:
     """Set up cloud coordinator and perform BLID matching in background."""
     try:
+        if cloud_coordinator:
+            await cloud_coordinator.async_config_entry_first_refresh()
+
         # Perform BLID matching only if not already stored in config entry
         if "robot_blid" not in entry.data:
             matched_blid = await _async_match_blid(
