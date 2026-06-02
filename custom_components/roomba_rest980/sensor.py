@@ -546,7 +546,7 @@ class RoombaJobInitiator(RoombaSensor):
         """Create a new job initiator reading."""
         super().__init__(coordinator, entry)
         self._attr_device_class = SensorDeviceClass.ENUM
-        self._attr_options = list(jobInitiatorMappings.values())
+        self._attr_options = list(jobInitiatorMappings.values()) + ["Unknown"]
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_icon = "mdi:cursor-pointer"
 
