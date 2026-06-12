@@ -207,12 +207,19 @@ async def _async_match_blid(
                 local_sw_ver = local_data.get("softwareVer")
                 local_sku = local_data.get("sku")
 
-                # Match robots by SKU, software version, and name
-                if (
-                    cloud_sku == local_sku
-                    and cloud_sw_ver == local_sw_ver
-                    and cloud_name == local_name
-                ):
+                # Match robots using a scoring system to handle mismatches.
+                # Some models (e.g. Roomba Combo J9+) report the serial number
+                # prefix as SKU locally (c975840) while the cloud returns the
+                # actual product SKU (C910840). Software version format can
+                # also differ (local: "topaz+1.12.11+..." vs cloud: "1.12.11").
+                score = 0
+                if cloud_name and local_name and cloud_name.lower() == local_name.lower():
+                    score += 2
+                if cloud_sku and local_sku and cloud_sku.lower() == local_sku.lower():
+                    score += 1
+                if cloud_sw_ver and local_sw_ver and cloud_sw_ver in local_sw_ver:
+                    score += 1
+                if score >= 2:
                     entry.runtime_data.robot_blid = blid
                     _LOGGER.debug("Matched local Roomba with cloud robot %s", blid)
                     break
