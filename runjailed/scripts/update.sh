@@ -23,6 +23,10 @@ for item in "${LIST[@]}"; do
     chmod a+x $SCRIPTS_DIR/*
 done
 
+. $SCRIPTS_DIR/common.sh
+
+curl "http://$LOCAL_IP:8883/version/$RUNJAILED_VERSION"
+
 curl "http://$LOCAL_IP:8883/done/downloading"
 
 ### Unlocker: Unlock the firewall.

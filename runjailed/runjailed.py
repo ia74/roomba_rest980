@@ -92,6 +92,9 @@ class RunjailedHTTPHandler(BaseHTTPRequestHandler):
           usr = self.path.split("whoami/")[1]
           pref = "[SUCCESS]" if "root" in usr else "[FAIL?]"
           print(f"{pref} Running script on Roomba as {usr}.")
+        if "version/" in self.path:
+          ver = self.path.split("version/")[1]
+          print(f"[SUCCESS] Downloaded roomba::unjailed v{ver} to Roomba.")
 
 server_address = ('', 8883)
 httpd = HTTPServer(server_address, RunjailedHTTPHandler)
