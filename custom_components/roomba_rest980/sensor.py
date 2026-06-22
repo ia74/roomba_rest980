@@ -334,8 +334,12 @@ class RoombaCloudAttributes(RoombaCloudSensor):
 
     @property
     def extra_state_attributes(self):
-        """Return all the attributes returned by iRobot's cloud."""
-        return self.coordinator.data.get(self._entry.runtime_data.robot_blid) or {}
+        """Return all the attributes returned by iRobot's cloud, minus large PMap data."""
+        data = self.coordinator.data.get(self._entry.runtime_data.robot_blid) or {}
+        return {
+            k: v for k, v in data.items()
+            if k not in {"mission_history", "pmaps"} and not k.startswith("pmap_umf_")
+        }
 
 
 class RoombaCloudPmap(RoombaCloudSensor):
