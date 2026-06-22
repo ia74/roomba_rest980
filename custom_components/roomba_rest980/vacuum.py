@@ -131,7 +131,7 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         cycle = status.get("cycle")
 
         if phase in {"stop", "pause"} or (cycle == "none" and phase == "resume"):
-            self.call_rest980_action("resume")
+            await self.call_rest980_action("resume")
             return
 
         try:
