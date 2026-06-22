@@ -190,6 +190,10 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
                     },
                     blocking=True,
                 )
+            
+            # Deselect rooms
+            for room in selected_rooms:
+                await room.async_select_option("Don't Clean")
         except (KeyError, AttributeError, ValueError, Exception) as e:
             _LOGGER.error("Failed to start cleaning due to configuration error: %s", e)
 
