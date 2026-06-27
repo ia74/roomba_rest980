@@ -30,5 +30,18 @@
     "abort": {
       "missing_user_data": "Forgot the local Rest980 data."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Map options",
+        "data": {
+          "show_zones": "Show zones on the map"
+        },
+        "data_description": {
+          "show_zones": "Draw keep-out, clean, and observed zones on the map image. Turn this off for a rooms-only map."
+        }
+      }
+    }
   }
 }

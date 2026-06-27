@@ -8,7 +8,8 @@ from aiohttp import ClientConnectorError, ClientError
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.config_entries import ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
+from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .CloudApi import AuthenticationError, iRobotCloudApi
@@ -43,6 +44,12 @@ class RoombaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _proposed_name: str
     _user_data: dict[str, any]
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> "RoombaOptionsFlow":
+        """Get the options flow for this handler."""
+        return RoombaOptionsFlow()
 
     async def async_step_reauth(self, entry_data: dict[str, any]) -> ConfigFlowResult:
         """Perform reauth upon an API authentication error."""
@@ -131,3 +138,23 @@ class RoombaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._user_data = user_input
             return self.async_show_form(step_id="cloud", data_schema=CLOUD_SCHEMA)
         return self.async_show_form(step_id="user", data_schema=USER_SCHEMA)
+
+
+class RoombaOptionsFlow(config_entries.OptionsFlow):
+    """Handle options for the Roomba integration."""
+
+    async def async_step_init(self, user_input=None) -> ConfigFlowResult:
+        """Manage the map rendering options."""
+        if user_input is not None:
+            return self.async_create_entry(data=user_input)
+
+        options = self.config_entry.options
+        options_schema = vol.Schema(
+            {
+                vol.Required(
+                    "show_zones",
+                    default=options.get("show_zones", True),
+                ): bool,
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=options_schema)
