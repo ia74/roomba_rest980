@@ -80,10 +80,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Register services
     await _async_register_services(hass)
 
+    # Reload the entry when its options change (e.g. show_zones toggle)
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
     # Forward platforms; create tasks but await to ensure no failure?
     await hass.config_entries.async_forward_entry_setups(entry, ["vacuum", "sensor"])
 
     return True
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload the integration when its options are updated."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def _async_register_services(hass: HomeAssistant) -> None:

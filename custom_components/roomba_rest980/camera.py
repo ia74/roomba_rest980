@@ -238,8 +238,9 @@ class RoombaMapCamera(Camera):
                         # Draw coordinate points (walls/obstacles)
                         self._draw_points(draw, offset_x, offset_y, scale)
 
-                        # Draw zones (keepout, clean, observed)
-                        img = self._draw_zones(img, offset_x, offset_y, scale)
+                        # Draw zones (keepout, clean, observed) unless disabled
+                        if self._entry.options.get("show_zones", True):
+                            img = self._draw_zones(img, offset_x, offset_y, scale)
 
         # Convert to bytes
         img_bytes = io.BytesIO()
