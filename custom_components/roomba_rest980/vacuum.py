@@ -101,7 +101,8 @@ class RoombaVacuum(CoordinatorEntity, StateVacuumEntity):
         extra_attributes = createExtendedAttributes(self)
         extra_attributes.update(
             {
-                "battery_level": self._attr_battery_level,
+                # HA's vacuum entity no longer defines _attr_battery_level; read it from the payload.
+                "battery_level": data.get("batPct"),
                 "bin_full": bin_data.get("full"),
                 "bin_present": bin_data.get("present"),
             }
