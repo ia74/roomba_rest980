@@ -4,6 +4,7 @@ from datetime import timedelta
 
 DOMAIN = "roomba_rest980"
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=10)  # or whatever interval you want
+CLOUD_SCAN_INTERVAL = timedelta(minutes=5)  # maps/favorites/schedules don't change every 10s
 
 # The cloud coordinator used to share DEFAULT_SCAN_INTERVAL with the local one,
 # meaning every robot on an account re-authenticated and re-fetched mission
