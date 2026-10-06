@@ -4,6 +4,7 @@ from datetime import timedelta
 
 DOMAIN = "roomba_rest980"
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=10)  # or whatever interval you want
+CLOUD_SCAN_INTERVAL = timedelta(minutes=5)  # maps/favorites/schedules don't change every 10s
 
 OPERATING_MODE_VACUUM = 2
 OPERATING_MODE_MOP = 6

@@ -56,7 +56,6 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
             RoombaRSSI(coordinator, entry),
             RoombaNetworkNoise(coordinator, entry),
             RoombaSNR(coordinator, entry),
-            RoombaCloudAttributes(cloudCoordinator, entry),
             MopCleanMode(coordinator, entry),
             MopBehavior(coordinator, entry),
             MopPad(coordinator, entry),
@@ -65,6 +64,11 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
         ],
         update_before_add=True,
     )
+
+    if cloudCoordinator:
+        async_add_entities(
+            [RoombaCloudAttributes(cloudCoordinator, entry)], update_before_add=True
+        )
 
     # Create cloud pmap entities if cloud data is available
     cloud_entities = []
@@ -367,7 +371,7 @@ class RoombaPhase(RoombaSensor):
         """Initialize."""
         super().__init__(coordinator, entry)
         self._attr_device_class = SensorDeviceClass.ENUM
-        self._attr_options = list(phaseMappings.values())
+        self._attr_options = list(phaseMappings.values()) + ["Unknown"]
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def _handle_coordinator_update(self):
@@ -464,7 +468,8 @@ class RoombaRSSI(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         signal_info = data.get("signal") or {}
-        self._attr_native_value = signal_info.get("rssi", "n-a")
+        value = signal_info.get("rssi")
+        self._attr_native_value = value if isinstance(value, (int, float)) else None
         self.async_write_ha_state()
 
 
@@ -485,7 +490,8 @@ class RoombaSNR(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         signal_info = data.get("signal") or {}
-        self._attr_native_value = signal_info.get("snr", "n-a")
+        value = signal_info.get("snr")
+        self._attr_native_value = value if isinstance(value, (int, float)) else None
         self.async_write_ha_state()
 
 

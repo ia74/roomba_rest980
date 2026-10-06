@@ -1,5 +1,6 @@
 """Roomba integration using an external Rest980 server."""
 
+import asyncio
 import logging
 
 import voluptuous as vol
@@ -25,6 +26,7 @@ class RoombaRuntimeData:
     robot_blid: str = None
     cloud_enabled: bool = False
     cloud_coordinator: RoombaCloudCoordinator = None
+    cloud_platforms_loaded: bool = False
 
     vacuum_mode: str = None
     mop_mode: str = None
@@ -43,6 +45,7 @@ class RoombaRuntimeData:
         self.robot_blid = robot_blid
         self.cloud_enabled = cloud_enabled
         self.cloud_coordinator = cloud_coordinator
+        self.cloud_platforms_loaded = False
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -62,21 +65,43 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up cloud coordinator if enabled
     if entry.data["cloud_api"]:
         cloud_coordinator = RoombaCloudCoordinator(hass, entry)
+        # Keep the coordinator object even if the first refresh below fails.
+        # A None coordinator is what used to crash CoordinatorEntity.async_update()
+        # (RoombaCloudAttributes) when update_before_add=True ran before any
+        # successful fetch.
+        entry.runtime_data.cloud_coordinator = cloud_coordinator
+
+        async def _try_setup_cloud_once() -> None:
+            """Forward select/button/camera the first time cloud data is ready."""
+            if (
+                entry.runtime_data.cloud_platforms_loaded
+                or not cloud_coordinator.last_update_success
+            ):
+                return
+            await _async_setup_cloud(hass, entry, coordinator, cloud_coordinator)
+
         try:
             await cloud_coordinator.async_config_entry_first_refresh()
-
-            # Start background task for cloud setup and BLID matching
-            hass.async_create_task(
-                _async_setup_cloud(hass, entry, coordinator, cloud_coordinator)
-            )
-
-            # Update runtime data with cloud coordinator
-            entry.runtime_data.cloud_coordinator = cloud_coordinator
         except Exception as e:  # pylint: disable=broad-except
             _LOGGER.warning(
-                "Cloud API unavailable, continuing with local only: %s", e
+                "Cloud API unavailable at startup (%s); retrying a couple of "
+                "times before falling back to the normal poll interval", e
             )
-            cloud_coordinator = None
+            for delay in (20, 60):
+                await asyncio.sleep(delay)
+                await cloud_coordinator.async_request_refresh()
+                if cloud_coordinator.last_update_success:
+                    break
+
+        # Whether the attempts above succeeded or not, forward the cloud
+        # platforms now if possible, and keep retrying on every future
+        # successful poll until they've been loaded once.
+        await _try_setup_cloud_once()
+        entry.async_on_unload(
+            cloud_coordinator.async_add_listener(
+                lambda: hass.async_create_task(_try_setup_cloud_once())
+            )
+        )
     else:
         cloud_coordinator = None
 
@@ -156,10 +181,10 @@ async def _async_register_services(hass: HomeAssistant) -> None:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Safely remove Roombas."""
-    await hass.config_entries.async_unload_platforms(
-        entry, ["vacuum", "select", "sensor", "button", "camera"]
-    )
-    return True
+    platforms = ["vacuum", "sensor"]
+    if entry.runtime_data.cloud_platforms_loaded:
+        platforms += ["select", "button", "camera"]
+    return await hass.config_entries.async_unload_platforms(entry, platforms)
 
 
 async def _async_setup_cloud(
@@ -187,6 +212,7 @@ async def _async_setup_cloud(
         await hass.config_entries.async_forward_entry_setups(
             entry, ["select", "button", "camera"]
         )
+        entry.runtime_data.cloud_platforms_loaded = True
 
     except Exception as e:  # pylint: disable=broad-except
         _LOGGER.error("Failed to set up cloud coordinator: %s", e)

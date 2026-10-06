@@ -16,7 +16,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .CloudApi import iRobotCloudApi, AuthenticationError, CloudApiError
-from .const import DEFAULT_SCAN_INTERVAL
+from .const import CLOUD_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class RoombaCloudCoordinator(DataUpdateCoordinator):
             _LOGGER,
             name="iRobot Cloud API data",
             config_entry=config_entry,
-            update_interval=DEFAULT_SCAN_INTERVAL,
+            update_interval=CLOUD_SCAN_INTERVAL,
         )
         self.username = config_entry.data["irobot_username"]
         self.password = config_entry.data["irobot_password"]
@@ -82,7 +82,7 @@ class RoombaCloudCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         try:
-            async with asyncio.timeout(10):
+            async with asyncio.timeout(45):
                 return await self.api.get_all_robots_data()
         except (aiohttp.ClientError, TimeoutError) as err:
             raise UpdateFailed(f"Error communicating with API: {err}") from err
