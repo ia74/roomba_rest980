@@ -4,6 +4,15 @@ from datetime import timedelta
 
 DOMAIN = "roomba_rest980"
 DEFAULT_SCAN_INTERVAL = timedelta(seconds=10)  # or whatever interval you want
+CLOUD_SCAN_INTERVAL = timedelta(minutes=5)  # maps/favorites/schedules don't change every 10s
+
+# The cloud coordinator used to share DEFAULT_SCAN_INTERVAL with the local one,
+# meaning every robot on an account re-authenticated and re-fetched mission
+# history/pmaps from iRobot's cloud every 10s. With more than one or two robots
+# on the same account this reliably trips iRobot's own "no mqtt slot available"
+# session rate limit. Cloud data (maps, mission history) doesn't need anywhere
+# near that freshness, so it gets its own, much longer interval.
+DEFAULT_CLOUD_SCAN_INTERVAL = timedelta(minutes=5)
 
 OPERATING_MODE_VACUUM = 2
 OPERATING_MODE_MOP = 6

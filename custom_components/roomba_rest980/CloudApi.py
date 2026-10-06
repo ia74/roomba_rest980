@@ -493,6 +493,16 @@ class iRobotCloudApi:
 
     retry_count = 0
 
+    def get_cached_robots_info(self) -> dict[str, dict[str, Any]]:
+        """Return the per-robot info already in hand from login, at no extra API cost.
+
+        `authenticate()` populates `self.robots` from the login response, so this
+        needs no network round trip. It's enough for BLID matching (name/sku/
+        softwareVer) before a config entry's own robot_blid is known, without
+        paying for the mission-history/pmaps/pmap_umf calls in get_robot_data().
+        """
+        return {blid: {"robot_info": info} for blid, info in self.robots.items()}
+
     async def get_all_robots_data(self) -> dict[str, dict[str, Any]]:
         """Get data for all authenticated robots."""
         if not self.robots:
