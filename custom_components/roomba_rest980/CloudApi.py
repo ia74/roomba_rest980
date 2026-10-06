@@ -4,6 +4,7 @@ Based on reverse engineering of the iRobot mobile app.
 """
 
 from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 import hashlib
 import hmac
 import json
@@ -30,6 +31,32 @@ class CloudApiError(Exception):
 
 class AuthenticationError(CloudApiError):
     """Authentication related errors."""
+
+
+class RateLimitedError(CloudApiError):
+    """iRobot's cloud answered 429 Too Many Requests."""
+
+    def __init__(self, retry_after: float | None) -> None:
+        """Store the server's requested wait (seconds), if it sent one."""
+        super().__init__(f"AWS request failed: 429 (Retry-After: {retry_after})")
+        self.retry_after = retry_after
+
+
+def _parse_retry_after(value: str | None) -> float | None:
+    """Return seconds to wait from a Retry-After header (delta-seconds or HTTP date)."""
+    if not value:
+        return None
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        pass
+    try:
+        when = parsedate_to_datetime(value)
+    except (TypeError, ValueError):
+        return None
+    if when.tzinfo is None:
+        when = when.replace(tzinfo=UTC)
+    return max(0.0, (when - datetime.now(UTC)).total_seconds())
 
 
 class AWSSignatureV4:
@@ -418,6 +445,10 @@ class iRobotCloudApi:
                     await self.authenticate()
                     _LOGGER.debug("Reauthenticating API")
                     return await self._aws_request(url, params)
+                if response.status == 429:
+                    raise RateLimitedError(
+                        _parse_retry_after(response.headers.get("Retry-After"))
+                    )
                 raise CloudApiError(f"AWS request failed: {response.status}")
 
             return await response.json()
@@ -484,6 +515,9 @@ class iRobotCloudApi:
                     robot_data[f"pmap_umf_{pmap['pmap_id']}"] = await self.get_pmap_umf(
                         blid, pmap["pmap_id"], pmap["active_pmapv_id"]
                     )
+                except RateLimitedError:
+                    # Stop the whole refresh; more map requests would only extend the limit.
+                    raise
                 except CloudApiError as e:
                     _LOGGER.warning(
                         "Failed to get UMF for pmap %s: %s", pmap["pmap_id"], e
@@ -517,6 +551,8 @@ class iRobotCloudApi:
             try:
                 all_data[blid] = await self.get_robot_data(blid)
                 _LOGGER.debug("Retrieved data for robot %s", blid)
+            except RateLimitedError:
+                raise
             except CloudApiError as e:
                 _LOGGER.error("Failed to get data for robot %s: %s", blid, e)
                 all_data[blid] = {"error": str(e)}

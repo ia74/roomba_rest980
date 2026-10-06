@@ -14,6 +14,13 @@ CLOUD_SCAN_INTERVAL = timedelta(minutes=5)  # maps/favorites/schedules don't cha
 # near that freshness, so it gets its own, much longer interval.
 DEFAULT_CLOUD_SCAN_INTERVAL = timedelta(minutes=5)
 
+# On 429 the cloud coordinator waits as long as iRobot's Retry-After header asks
+# (never less than the normal interval, capped at CLOUD_RETRY_AFTER_MAX). Without
+# the header it doubles the wait per consecutive 429, up to CLOUD_BACKOFF_MAX.
+# The normal interval returns after the first successful refresh.
+CLOUD_BACKOFF_MAX = timedelta(hours=1)
+CLOUD_RETRY_AFTER_MAX = timedelta(hours=6)
+
 OPERATING_MODE_VACUUM = 2
 OPERATING_MODE_MOP = 6
 
