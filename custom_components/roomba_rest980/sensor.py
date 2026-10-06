@@ -383,6 +383,10 @@ class RoombaPhase(RoombaSensor):
         """Initialize."""
         super().__init__(coordinator, entry)
         self._attr_device_class = SensorDeviceClass.ENUM
+        # phaseMappings.get() below falls back to "Unknown" for any phase value it
+        # doesn't recognize, so "Unknown" has to be a declared option too -- an ENUM
+        # sensor that reports a value outside its own _attr_options list raises
+        # ValueError in Home Assistant (#55).
         self._attr_options = list(phaseMappings.values()) + ["Unknown"]
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -463,6 +467,17 @@ class RoombaIP(RoombaSensor):
         self.async_write_ha_state()
 
 
+def _numeric_signal_value(value):
+    """Return ``value`` if it's numeric, else ``None``.
+
+    rest980 reports "n/a" for rssi/snr/noise while the Roomba is asleep or
+    docked. These sensors declare ``device_class = SIGNAL_STRENGTH``, which
+    Home Assistant requires to be numeric (or ``None``); passing the raw
+    string through raises ValueError every update cycle (#55).
+    """
+    return value if isinstance(value, (int, float)) else None
+
+
 class RoombaRSSI(RoombaSensor):
     """A simple sensor that returns the state of the RSSI of the Roomba."""
 
@@ -480,8 +495,7 @@ class RoombaRSSI(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         signal_info = data.get("signal") or {}
-        value = signal_info.get("rssi")
-        self._attr_native_value = value if isinstance(value, (int, float)) else None
+        self._attr_native_value = _numeric_signal_value(signal_info.get("rssi"))
         self.async_write_ha_state()
 
 
@@ -502,8 +516,7 @@ class RoombaSNR(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         signal_info = data.get("signal") or {}
-        value = signal_info.get("snr")
-        self._attr_native_value = value if isinstance(value, (int, float)) else None
+        self._attr_native_value = _numeric_signal_value(signal_info.get("snr"))
         self.async_write_ha_state()
 
 
@@ -524,7 +537,7 @@ class RoombaNetworkNoise(RoombaSensor):
         """Update sensor when coordinator data changes."""
         data = self.coordinator.data or {}
         signal_info = data.get("signal") or {}
-        self._attr_native_value = signal_info.get("noise", None)
+        self._attr_native_value = _numeric_signal_value(signal_info.get("noise"))
         self.async_write_ha_state()
 
 
