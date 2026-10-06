@@ -65,10 +65,22 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
         update_before_add=True,
     )
 
+    # RoombaCloudAttributes needs a real coordinator -- when cloud_api is on but
+    # the cloud coordinator's first refresh failed (auth error, rate limit, the
+    # account's session cap, ...), entry.runtime_data.cloud_coordinator is None
+    # and this integration is meant to keep working "local only" (see the
+    # warning logged in __init__.py). Constructing it with coordinator=None
+    # doesn't degrade gracefully, though: it used to be created unconditionally
+    # in the async_add_entities() call above, and update_before_add=True
+    # immediately calls entity.async_update() -> self.coordinator.
+    # async_request_refresh(), which is an AttributeError on None. HA logs and
+    # isolates that per entity ("roomba_rest980: Error on device update!") so
+    # it doesn't take the rest of the batch down with it, but the cloud
+    # attributes sensor itself then never gets added and stays permanently
+    # missing rather than just unavailable. Only create it once there's a real
+    # coordinator to back it.
     if cloudCoordinator:
-        async_add_entities(
-            [RoombaCloudAttributes(cloudCoordinator, entry)], update_before_add=True
-        )
+        async_add_entities([RoombaCloudAttributes(cloudCoordinator, entry)])
 
     # Create cloud pmap entities if cloud data is available
     cloud_entities = []

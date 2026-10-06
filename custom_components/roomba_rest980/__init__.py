@@ -209,6 +209,15 @@ async def _async_setup_cloud(
         else:
             # Use stored BLID from config entry
             entry.runtime_data.robot_blid = entry.data["robot_blid"]
+
+        # The coordinator's first refresh ran before robot_blid was known, so it
+        # only holds the lightweight cached robot_info snapshot (see
+        # coordinator.py) -- no pmaps/mission data yet. Now that robot_blid is
+        # set, refresh once more so select/camera below see this robot's real
+        # per-robot data instead of setting up with nothing to show.
+        if entry.runtime_data.robot_blid:
+            await cloud_coordinator.async_refresh()
+
         await hass.config_entries.async_forward_entry_setups(
             entry, ["select", "button", "camera"]
         )
