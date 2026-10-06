@@ -1,6 +1,7 @@
 """Data update coordinator for Roomba REST980."""
 
 import asyncio
+from datetime import timedelta
 import logging
 
 import aiohttp
@@ -15,8 +16,18 @@ from homeassistant.helpers.update_coordinator import (
     UpdateFailed,
 )
 
-from .CloudApi import iRobotCloudApi, AuthenticationError, CloudApiError
-from .const import DEFAULT_CLOUD_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+from .CloudApi import (
+    iRobotCloudApi,
+    AuthenticationError,
+    CloudApiError,
+    RateLimitedError,
+)
+from .const import (
+    CLOUD_BACKOFF_MAX,
+    CLOUD_RETRY_AFTER_MAX,
+    DEFAULT_CLOUD_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,6 +83,17 @@ class RoombaCloudCoordinator(DataUpdateCoordinator):
         self.session = async_get_clientsession(hass)
         self.api = iRobotCloudApi(self.username, self.password, self.session)
         self._entry = config_entry
+        self._rate_limited_count = 0
+
+    def _backoff_interval(self, retry_after: float | None) -> timedelta:
+        """Pick the wait after a 429: Retry-After if sent, else exponential."""
+        if retry_after is not None:
+            wait = timedelta(seconds=retry_after)
+            return min(max(wait, DEFAULT_CLOUD_SCAN_INTERVAL), CLOUD_RETRY_AFTER_MAX)
+        return min(
+            DEFAULT_CLOUD_SCAN_INTERVAL * 2**self._rate_limited_count,
+            CLOUD_BACKOFF_MAX,
+        )
 
     async def _async_setup(self):
         try:
@@ -110,6 +132,20 @@ class RoombaCloudCoordinator(DataUpdateCoordinator):
 
                 all_data["schedules"] = await self.api.get_schedules()
                 all_data["favorites"] = await self.api.get_favorites()
-                return all_data
+        except RateLimitedError as err:
+            # Polling on through a 429 keeps the limit in place, so wait it out:
+            # the coordinator schedules its next refresh from update_interval.
+            self._rate_limited_count += 1
+            self.update_interval = self._backoff_interval(err.retry_after)
+            raise UpdateFailed(
+                f"Rate limited by iRobot cloud (429, Retry-After: {err.retry_after}); "
+                f"next attempt in {self.update_interval}"
+            ) from err
         except (aiohttp.ClientError, TimeoutError) as err:
-            raise UpdateFailed(f"Error communicating with API: {err}") from err
+            raise UpdateFailed(f"Error communicating with API: {err!r}") from err
+
+        if self._rate_limited_count:
+            _LOGGER.info("iRobot cloud reachable again; back to normal polling")
+            self._rate_limited_count = 0
+            self.update_interval = DEFAULT_CLOUD_SCAN_INTERVAL
+        return all_data
