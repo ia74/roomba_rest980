@@ -1,12 +1,23 @@
 # services.yaml
-action:
+# Keys here must match the registered service names (DOMAIN.rest980_action /
+# DOMAIN.rest980_clean, see __init__.py's hass.services.async_register calls)
+# and fields must match their vol.Schema -- "action"/"command" and "clean"
+# previously didn't match either, so Developer Tools showed no field hints
+# and the wrong field names for both services.
+rest980_action:
   fields:
-    command:
+    action:
       required: true
-      example: "dock"
+      example: "evac"
+    base_url:
+      required: true
+      example: "http://192.168.1.50:3000"
 
-clean:
+rest980_clean:
   fields:
     payload:
       required: true
       example: '{"regions": [{"region_id": "11", "type": "rid"}]}'
+    base_url:
+      required: true
+      example: "http://192.168.1.50:3000"

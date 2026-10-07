@@ -13,8 +13,17 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     """Create the switches to identify cleanable rooms."""
+    coordinator = entry.runtime_data.local_coordinator
     cloudCoordinator = entry.runtime_data.cloud_coordinator
     entities = []
+
+    # Only robots docked to a recognized Clean Base can evac -- same check
+    # sensor.py's RoombaCleanBase uses to decide "Not Available" vs a real
+    # dock state.
+    local_data = coordinator.data or {}
+    if (local_data.get("dock") or {}).get("known"):
+        entities.append(EmptyBinButton(entry))
+
     if cloudCoordinator and cloudCoordinator.data:
         blid = entry.runtime_data.robot_blid
         # Get cloud data for the specific robot
@@ -26,6 +35,35 @@ async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
                     [FavoriteButton(entry, fav) for fav in cloud_data["favorites"]]
                 )
     async_add_entities(entities)
+
+
+class EmptyBinButton(ButtonEntity):
+    """A button entity to empty the robot's bin into its Clean Base."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Empty Bin"
+    _attr_icon = "mdi:delete-restore"
+
+    def __init__(self, entry) -> None:
+        """Create the empty bin button."""
+        self._entry = entry
+        self._attr_unique_id = f"{entry.unique_id}_empty_bin"
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, entry.unique_id)},
+            "name": entry.title,
+            "manufacturer": "iRobot",
+        }
+
+    async def async_press(self):
+        """Tell the Clean Base to empty the bin."""
+        await self.hass.services.async_call(
+            DOMAIN,
+            "rest980_action",
+            service_data={
+                "action": "evac",
+                "base_url": self._entry.data["base_url"],
+            },
+        )
 
 
 class FavoriteButton(ButtonEntity):
