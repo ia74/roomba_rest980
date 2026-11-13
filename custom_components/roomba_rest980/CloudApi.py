@@ -369,7 +369,7 @@ class iRobotCloudApi:
 
             # Check if required keys exist
             if "credentials" not in login_result:
-                msg = login_result["errorMessage"] or login_result
+                msg = login_result.get("errorMessage") or login_result
                 if "mqtt slot" in msg:
                     msg = f"The cloud authentication has been rate-limited. Try closing the iRobot app or trying again later. ({login_result['errorMessage']})"
                 raise AuthenticationError(f"{msg}")

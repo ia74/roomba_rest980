@@ -122,6 +122,9 @@ class RoombaCloudCoordinator(DataUpdateCoordinator):
         # not mission history or maps. `schedules`/`favorites` are account-level
         # (read by button.py across all entries) so they're still fetched here
         # every cycle, but that's 2 calls, not the O(N) map/mission fetch.
+        if not self.api.credentials:
+            await self._async_setup()
+
         try:
             async with asyncio.timeout(20):
                 blid = getattr(self._entry.runtime_data, "robot_blid", None)
